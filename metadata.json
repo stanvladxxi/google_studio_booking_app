@@ -1,0 +1,8 @@
+{
+  "name": "Hearthline Kitchen",
+  "description": "Hourly commercial kitchen space and equipment booking, raw material ledger, recipe test records, operational log files, and staff duty management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

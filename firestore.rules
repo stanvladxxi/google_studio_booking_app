@@ -1,0 +1,540 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'raxvex@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isDefaultCatalogSpace(spaceId) {
+      return spaceId in ['space_pastry_suite', 'space_hotline_bay', 'space_cold_prep', 'space_sensory_rd'];
+    }
+
+    function isDefaultStaffMember(staffId) {
+      return staffId in ['staff_elena_vance', 'staff_marcus_chen', 'staff_nadia_okafor', 'staff_david_kessler', 'staff_sofia_morales'];
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'role', 'loyaltyPoints', 'totalHoursBooked', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'role', 'loyaltyPoints', 'totalHoursBooked', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.role in ['member', 'admin']
+        && data.loyaltyPoints is number && data.loyaltyPoints >= 0 && data.loyaltyPoints <= 10000000
+        && data.totalHoursBooked is number && data.totalHoursBooked >= 0 && data.totalHoursBooked <= 100000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidKitchenSpace(data) {
+      return data.keys().hasAll(['id', 'name', 'zone', 'sqFt', 'capacity', 'hourlyRate', 'description', 'imagePath', 'isActive', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'name', 'zone', 'sqFt', 'capacity', 'hourlyRate', 'description', 'imagePath', 'isActive', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.zone in ['Pastry', 'Hot Line', 'Cold Prep', 'R&D Lab']
+        && data.sqFt is number && data.sqFt > 0 && data.sqFt <= 50000
+        && data.capacity is number && data.capacity > 0 && data.capacity <= 100
+        && data.hourlyRate is number && data.hourlyRate >= 0 && data.hourlyRate <= 5000
+        && data.description is string && data.description.size() <= 500
+        && data.imagePath is string && data.imagePath.size() <= 200
+        && data.isActive is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEquipment(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'spec', 'hourlyRate', 'totalUnits', 'isActive', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'name', 'category', 'spec', 'hourlyRate', 'totalUnits', 'isActive', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.category in ['Thermal', 'Mixing', 'Cooling', 'Packaging', 'Precision']
+        && data.spec is string && data.spec.size() <= 160
+        && data.hourlyRate is number && data.hourlyRate >= 0 && data.hourlyRate <= 2000
+        && data.totalUnits is number && data.totalUnits >= 0 && data.totalUnits <= 100
+        && data.isActive is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAvailabilitySlot(data) {
+      return data.keys().hasAll(['bookingId', 'ownerId', 'spaceId', 'date', 'startHour', 'endHour', 'status', 'updatedAt'])
+        && data.keys().hasOnly(['bookingId', 'ownerId', 'spaceId', 'date', 'startHour', 'endHour', 'status', 'updatedAt'])
+        && isValidId(data.bookingId)
+        && isValidId(data.ownerId)
+        && isValidId(data.spaceId)
+        && data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.startHour is number && data.startHour >= 0 && data.startHour <= 23
+        && data.endHour is number && data.endHour > data.startHour && data.endHour <= 24
+        && data.status in ['confirmed', 'in-progress', 'completed', 'cancelled']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['ownerId', 'chefName', 'spaceId', 'spaceName', 'date', 'startHour', 'durationHours', 'endHour', 'equipmentItems', 'spaceSubtotal', 'equipmentSubtotal', 'totalCost', 'pointsEarned', 'status', 'notes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'chefName', 'spaceId', 'spaceName', 'date', 'startHour', 'durationHours', 'endHour', 'equipmentItems', 'spaceSubtotal', 'equipmentSubtotal', 'totalCost', 'pointsEarned', 'status', 'notes', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.chefName is string && data.chefName.size() >= 1 && data.chefName.size() <= 100
+        && isValidId(data.spaceId)
+        && data.spaceName is string && data.spaceName.size() >= 1 && data.spaceName.size() <= 100
+        && data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.startHour is number && data.startHour >= 0 && data.startHour <= 23
+        && data.durationHours is number && data.durationHours >= 1 && data.durationHours <= 16
+        && data.endHour is number && data.endHour > data.startHour && data.endHour <= 24
+        && data.equipmentItems is list && data.equipmentItems.size() <= 20
+        && (data.equipmentItems.size() == 0 || data.equipmentItems[0] is map)
+        && data.spaceSubtotal is number && data.spaceSubtotal >= 0 && data.spaceSubtotal <= 100000
+        && data.equipmentSubtotal is number && data.equipmentSubtotal >= 0 && data.equipmentSubtotal <= 100000
+        && data.totalCost is number && data.totalCost >= 0 && data.totalCost <= 200000
+        && data.pointsEarned is number && data.pointsEarned >= 0 && data.pointsEarned <= 50000
+        && data.status in ['confirmed', 'in-progress', 'completed', 'cancelled']
+        && data.notes is string && data.notes.size() <= 600
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidQueueEntry(data) {
+      return data.keys().hasAll(['ownerId', 'chefName', 'spaceId', 'spaceName', 'date', 'startHour', 'durationHours', 'endHour', 'equipmentItems', 'estimatedTotal', 'status', 'notes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'chefName', 'spaceId', 'spaceName', 'date', 'startHour', 'durationHours', 'endHour', 'equipmentItems', 'estimatedTotal', 'status', 'notes', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.chefName is string && data.chefName.size() >= 1 && data.chefName.size() <= 100
+        && isValidId(data.spaceId)
+        && data.spaceName is string && data.spaceName.size() >= 1 && data.spaceName.size() <= 100
+        && data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.startHour is number && data.startHour >= 0 && data.startHour <= 23
+        && data.durationHours is number && data.durationHours >= 1 && data.durationHours <= 16
+        && data.endHour is number && data.endHour > data.startHour && data.endHour <= 24
+        && data.equipmentItems is list && data.equipmentItems.size() <= 20
+        && (data.equipmentItems.size() == 0 || data.equipmentItems[0] is map)
+        && data.estimatedTotal is number && data.estimatedTotal >= 0 && data.estimatedTotal <= 200000
+        && data.status in ['waiting', 'promoted', 'cancelled']
+        && data.notes is string && data.notes.size() <= 400
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProductionBatch(data) {
+      return data.keys().hasAll(['ownerId', 'producerName', 'bookingId', 'date', 'batchNumber', 'productName', 'quantityProduced', 'unit', 'bakeTempC', 'textureScore', 'flavorScore', 'appearanceScore', 'qcScore', 'qcStatus', 'productionNotes', 'attachedFormId', 'formResponseCount', 'formAvgRating', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'producerName', 'bookingId', 'date', 'batchNumber', 'productName', 'quantityProduced', 'unit', 'bakeTempC', 'textureScore', 'flavorScore', 'appearanceScore', 'qcScore', 'qcStatus', 'productionNotes', 'attachedFormId', 'formResponseCount', 'formAvgRating', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.producerName is string && data.producerName.size() >= 1 && data.producerName.size() <= 100
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.batchNumber is string && data.batchNumber.size() >= 1 && data.batchNumber.size() <= 48
+        && data.productName is string && data.productName.size() >= 1 && data.productName.size() <= 120
+        && data.quantityProduced is number && data.quantityProduced >= 0 && data.quantityProduced <= 1000000
+        && data.unit in ['units', 'kg', 'g', 'L', 'trays']
+        && data.bakeTempC is number && data.bakeTempC >= -50 && data.bakeTempC <= 450
+        && data.textureScore is number && data.textureScore >= 0 && data.textureScore <= 10
+        && data.flavorScore is number && data.flavorScore >= 0 && data.flavorScore <= 10
+        && data.appearanceScore is number && data.appearanceScore >= 0 && data.appearanceScore <= 10
+        && data.qcScore is number && data.qcScore >= 0 && data.qcScore <= 100
+        && data.qcStatus in ['passed', 'hold', 'failed']
+        && data.productionNotes is string && data.productionNotes.size() <= 600
+        && data.attachedFormId is string && data.attachedFormId.size() <= 160
+        && data.formResponseCount is number && data.formResponseCount >= 0 && data.formResponseCount <= 100000
+        && data.formAvgRating is number && data.formAvgRating >= 0 && data.formAvgRating <= 10
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAttachedForm(data) {
+      return data.keys().hasAll(['ownerId', 'formId', 'title', 'responderUri', 'date', 'bookingId', 'batchNumbers', 'productsSummary', 'responseCount', 'bestBatchNumber', 'bestBatchScore', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'formId', 'title', 'responderUri', 'date', 'bookingId', 'batchNumbers', 'productsSummary', 'responseCount', 'bestBatchNumber', 'bestBatchScore', 'processType', 'testedPricePoint', 'willingToPayPct', 'avgSweetness', 'customQuestions', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.formId is string && data.formId.size() >= 1 && data.formId.size() <= 160
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.responderUri is string && data.responderUri.size() <= 400
+        && data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.batchNumbers is list && data.batchNumbers.size() <= 30
+        && (data.batchNumbers.size() == 0 || data.batchNumbers[0] is string)
+        && data.productsSummary is string && data.productsSummary.size() <= 400
+        && data.responseCount is number && data.responseCount >= 0 && data.responseCount <= 100000
+        && data.bestBatchNumber is string && data.bestBatchNumber.size() <= 48
+        && data.bestBatchScore is number && data.bestBatchScore >= 0 && data.bestBatchScore <= 100
+        && (!('processType' in data) || data.processType in ['hot', 'cold'])
+        && (!('testedPricePoint' in data) || (data.testedPricePoint is number && data.testedPricePoint >= 0 && data.testedPricePoint <= 100000))
+        && (!('willingToPayPct' in data) || (data.willingToPayPct is number && data.willingToPayPct >= 0 && data.willingToPayPct <= 100))
+        && (!('avgSweetness' in data) || (data.avgSweetness is number && data.avgSweetness >= 0 && data.avgSweetness <= 5))
+        && (!('customQuestions' in data) || (data.customQuestions is list && data.customQuestions.size() <= 25 && (data.customQuestions.size() == 0 || data.customQuestions[0] is map)))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRawMaterial(data) {
+      return data.keys().hasAll(['ownerId', 'name', 'category', 'quantity', 'unit', 'unitCost', 'lotCode', 'supplier', 'storageZone', 'bookingId', 'notes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'name', 'category', 'quantity', 'unit', 'unitCost', 'lotCode', 'supplier', 'storageZone', 'bookingId', 'notes', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.category in ['Flour & Dry', 'Dairy & Fats', 'Produce', 'Proteins', 'Specialty', 'Packaging']
+        && data.quantity is number && data.quantity >= 0 && data.quantity <= 1000000
+        && data.unit in ['kg', 'g', 'L', 'mL', 'units']
+        && data.unitCost is number && data.unitCost >= 0 && data.unitCost <= 100000
+        && data.lotCode is string && data.lotCode.size() <= 60
+        && data.supplier is string && data.supplier.size() <= 100
+        && data.storageZone in ['Dry Pantry', 'Walk-In Cooler', 'Deep Freezer', 'Prep Bench']
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.notes is string && data.notes.size() <= 400
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRecipe(data) {
+      return data.keys().hasAll(['ownerId', 'title', 'version', 'category', 'bookingId', 'prepMinutes', 'targetTempC', 'yieldText', 'ingredients', 'tastingNotes', 'outcome', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'title', 'version', 'category', 'bookingId', 'prepMinutes', 'targetTempC', 'yieldText', 'ingredients', 'tastingNotes', 'outcome', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+        && data.version is string && data.version.size() >= 1 && data.version.size() <= 20
+        && data.category in ['Bakery', 'Sauce & Emulsion', 'Fermentation', 'Plant-Based', 'Confectionery', 'Savory Prep']
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.prepMinutes is number && data.prepMinutes >= 0 && data.prepMinutes <= 10000
+        && data.targetTempC is number && data.targetTempC >= -50 && data.targetTempC <= 400
+        && data.yieldText is string && data.yieldText.size() <= 80
+        && data.ingredients is list && data.ingredients.size() <= 40
+        && (data.ingredients.size() == 0 || data.ingredients[0] is map)
+        && data.tastingNotes is string && data.tastingNotes.size() <= 1000
+        && data.outcome in ['approved', 'iterate', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStaffMember(data) {
+      return data.keys().hasAll(['staffCode', 'name', 'role', 'station', 'shift', 'linkedUid', 'isActive', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['staffCode', 'name', 'role', 'station', 'shift', 'linkedUid', 'isActive', 'createdAt', 'updatedAt'])
+        && data.staffCode is string && data.staffCode.size() >= 1 && data.staffCode.size() <= 24 && data.staffCode.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.role in ['Sous Chef', 'Prep Cook', 'Sanitation Lead', 'Facility Tech', 'R&D Baker']
+        && data.station is string && data.station.size() <= 80
+        && data.shift in ['Morning', 'Midday', 'Evening']
+        && data.linkedUid is string && data.linkedUid.size() <= 128
+        && data.isActive is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDuty(data) {
+      return data.keys().hasAll(['ownerId', 'assignedByUid', 'assignedByName', 'staffId', 'staffName', 'assigneeUid', 'title', 'description', 'station', 'priority', 'dueDate', 'bookingId', 'status', 'completionNotes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'assignedByUid', 'assignedByName', 'staffId', 'staffName', 'assigneeUid', 'title', 'description', 'station', 'priority', 'dueDate', 'bookingId', 'status', 'completionNotes', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && isValidId(data.assignedByUid)
+        && data.assignedByName is string && data.assignedByName.size() >= 1 && data.assignedByName.size() <= 100
+        && isValidId(data.staffId)
+        && data.staffName is string && data.staffName.size() >= 1 && data.staffName.size() <= 100
+        && data.assigneeUid is string && data.assigneeUid.size() <= 128
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
+        && data.description is string && data.description.size() <= 500
+        && data.station is string && data.station.size() <= 100
+        && data.priority in ['low', 'normal', 'urgent']
+        && data.dueDate is string && data.dueDate.size() <= 32
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.status in ['pending', 'in-progress', 'completed']
+        && data.completionNotes is string && data.completionNotes.size() <= 400
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLogEntry(data) {
+      return data.keys().hasAll(['ownerId', 'actorName', 'eventType', 'severity', 'station', 'tempReadingC', 'message', 'bookingId', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'actorName', 'eventType', 'severity', 'station', 'tempReadingC', 'message', 'bookingId', 'createdAt'])
+        && isValidId(data.ownerId)
+        && data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 100
+        && data.eventType in ['booking', 'material', 'recipe', 'duty', 'sanitation', 'equipment', 'incident', 'production']
+        && data.severity in ['info', 'warn', 'critical']
+        && data.station is string && data.station.size() <= 100
+        && data.tempReadingC is string && data.tempReadingC.size() <= 24
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 600
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.createdAt is timestamp;
+    }
+
+    match /admins/{uid} {
+      allow get: if isValidId(uid) && (isOwner(uid) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isAdmin() && isValidId(uid) && incoming().keys().hasAll(['email', 'createdAt']) && incoming().keys().hasOnly(['email', 'createdAt']) && incoming().email is string && incoming().email.size() <= 160 && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(uid);
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().role == 'member'
+        && incoming().loyaltyPoints == 0
+        && incoming().totalHoursBooked == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (isOwner(userId) && incoming().role == existing().role && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']) ||
+            (incoming().diff(existing()).affectedKeys().hasOnly(['loyaltyPoints', 'totalHoursBooked', 'updatedAt']) && incoming().loyaltyPoints <= existing().get('loyaltyPoints', 0) + 2400 && incoming().totalHoursBooked <= existing().get('totalHoursBooked', 0) + 24)
+          ))
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    match /spaces/{spaceId} {
+      allow get: if isSignedIn() && isValidId(spaceId) && (existing().isActive == true || isAdmin());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isBootstrappedAdmin());
+      allow create: if isAdmin() && isValidId(spaceId) && isValidKitchenSpace(incoming()) && incoming().id == spaceId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(spaceId) && isValidKitchenSpace(incoming()) && incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(spaceId);
+    }
+
+    match /equipment/{equipmentId} {
+      allow get: if isSignedIn() && isValidId(equipmentId) && (existing().isActive == true || isAdmin());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isBootstrappedAdmin());
+      allow create: if isAdmin() && isValidId(equipmentId) && isValidEquipment(incoming()) && incoming().id == equipmentId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(equipmentId) && isValidEquipment(incoming()) && incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(equipmentId);
+    }
+
+    match /availabilitySlots/{slotId} {
+      allow get: if isSignedIn() && isValidId(slotId) && existing().status in ['confirmed', 'in-progress', 'completed', 'cancelled'];
+      allow list: if isSignedIn() && resource.data.status in ['confirmed', 'in-progress', 'completed'];
+      allow create: if isVerifiedUser()
+        && isValidId(slotId)
+        && isValidAvailabilitySlot(incoming())
+        && (incoming().ownerId == request.auth.uid || isAdmin())
+        && incoming().bookingId == slotId
+        && incoming().updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/bookings/$(incoming().bookingId));
+      allow update: if isVerifiedUser()
+        && isValidId(slotId)
+        && isValidAvailabilitySlot(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().bookingId == existing().bookingId
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
+        );
+      allow delete: if isAdmin() && isValidId(slotId);
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && isValidId(bookingId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(bookingId)
+        && isValidBooking(incoming())
+        && (incoming().ownerId == request.auth.uid || isAdmin())
+        && incoming().status == 'confirmed'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (isDefaultCatalogSpace(incoming().spaceId) || exists(/databases/$(database)/documents/spaces/$(incoming().spaceId)))
+        && existsAfter(/databases/$(database)/documents/availabilitySlots/$(bookingId));
+      allow update: if isVerifiedUser()
+        && isValidId(bookingId)
+        && isValidBooking(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']) && incoming().status in ['confirmed', 'cancelled'])
+        );
+      allow delete: if isAdmin() && isValidId(bookingId);
+    }
+
+    match /bookingQueue/{queueId} {
+      allow get: if isSignedIn() && isValidId(queueId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(queueId)
+        && isValidQueueEntry(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().status == 'waiting'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(queueId)
+        && isValidQueueEntry(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().status == 'waiting' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
+        );
+      allow delete: if isVerifiedUser() && isValidId(queueId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /productionBatches/{batchId} {
+      allow get: if isSignedIn() && isValidId(batchId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(batchId)
+        && isValidProductionBatch(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(batchId)
+        && isValidProductionBatch(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['textureScore', 'flavorScore', 'appearanceScore', 'qcScore', 'qcStatus', 'productionNotes', 'attachedFormId', 'formResponseCount', 'formAvgRating', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(batchId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /attachedForms/{formDocId} {
+      allow get: if isSignedIn() && isValidId(formDocId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(formDocId)
+        && isValidAttachedForm(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(formDocId)
+        && isValidAttachedForm(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['responseCount', 'bestBatchNumber', 'bestBatchScore', 'willingToPayPct', 'avgSweetness', 'customQuestions', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(formDocId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /rawMaterials/{materialId} {
+      allow get: if isSignedIn() && isValidId(materialId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(materialId)
+        && isValidRawMaterial(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(materialId)
+        && isValidRawMaterial(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'storageZone', 'notes', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(materialId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /recipes/{recipeId} {
+      allow get: if isSignedIn() && isValidId(recipeId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(recipeId)
+        && isValidRecipe(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(recipeId)
+        && isValidRecipe(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().outcome != 'archived' && incoming().diff(existing()).affectedKeys().hasOnly(['version', 'outcome', 'tastingNotes', 'prepMinutes', 'targetTempC', 'yieldText', 'ingredients', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(recipeId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /staff/{staffId} {
+      allow get: if isSignedIn() && isValidId(staffId) && (existing().isActive == true || isAdmin());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isBootstrappedAdmin());
+      allow create: if isAdmin() && isValidId(staffId) && isValidStaffMember(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(staffId) && isValidStaffMember(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(staffId);
+    }
+
+    match /duties/{dutyId} {
+      allow get: if isSignedIn() && isValidId(dutyId) && (existing().ownerId == request.auth.uid || existing().assignedByUid == request.auth.uid || existing().assigneeUid == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || resource.data.assigneeUid == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(dutyId)
+        && isValidDuty(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().assignedByUid == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (isDefaultStaffMember(incoming().staffId) || exists(/databases/$(database)/documents/staff/$(incoming().staffId)));
+      allow update: if isVerifiedUser()
+        && isValidId(dutyId)
+        && isValidDuty(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().assignedByUid == existing().assignedByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().status != 'completed' && (existing().ownerId == request.auth.uid || existing().assigneeUid == request.auth.uid) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'completionNotes', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(dutyId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(logId)
+        && isValidLogEntry(incoming())
+        && (incoming().ownerId == request.auth.uid || isAdmin())
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin() && isValidId(logId) && isValidLogEntry(incoming()) && incoming().ownerId == existing().ownerId && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin() && isValidId(logId);
+    }
+  }
+}

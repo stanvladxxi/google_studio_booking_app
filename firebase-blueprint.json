@@ -1,0 +1,692 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile with loyalty points and hours booked.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "role": {
+          "type": "string",
+          "enum": ["member", "admin"]
+        },
+        "loyaltyPoints": {
+          "type": "number"
+        },
+        "totalHoursBooked": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "email", "role", "loyaltyPoints", "totalHoursBooked", "createdAt", "updatedAt"]
+    },
+    "KitchenSpace": {
+      "title": "KitchenSpace",
+      "description": "Commercial culinary station or room available for hourly booking.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "zone": {
+          "type": "string",
+          "enum": ["Pastry", "Hot Line", "Cold Prep", "R&D Lab"]
+        },
+        "sqFt": {
+          "type": "number"
+        },
+        "capacity": {
+          "type": "number"
+        },
+        "hourlyRate": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "imagePath": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "zone",
+        "sqFt",
+        "capacity",
+        "hourlyRate",
+        "description",
+        "imagePath",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "KitchenEquipment": {
+      "title": "KitchenEquipment",
+      "description": "Commercial kitchen equipment add-on rentable on an hourly basis.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Thermal", "Mixing", "Cooling", "Packaging", "Precision"]
+        },
+        "spec": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "hourlyRate": {
+          "type": "number"
+        },
+        "totalUnits": {
+          "type": "number"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "category",
+        "spec",
+        "hourlyRate",
+        "totalUnits",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AvailabilitySlot": {
+      "title": "AvailabilitySlot",
+      "description": "Non-PII booking time window used for facility occupancy timetable and collision checks.",
+      "type": "object",
+      "properties": {
+        "bookingId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "spaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 64
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "startHour": {
+          "type": "number"
+        },
+        "endHour": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "in-progress", "completed", "cancelled"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "bookingId",
+        "ownerId",
+        "spaceId",
+        "date",
+        "startHour",
+        "endHour",
+        "status",
+        "updatedAt"
+      ]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Hourly commercial kitchen reservation with equipment selections and earned points.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "chefName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "spaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 64
+        },
+        "spaceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "startHour": {
+          "type": "number"
+        },
+        "durationHours": {
+          "type": "number"
+        },
+        "endHour": {
+          "type": "number"
+        },
+        "equipmentItems": {
+          "type": "array"
+        },
+        "spaceSubtotal": {
+          "type": "number"
+        },
+        "equipmentSubtotal": {
+          "type": "number"
+        },
+        "totalCost": {
+          "type": "number"
+        },
+        "pointsEarned": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "in-progress", "completed", "cancelled"]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "chefName",
+        "spaceId",
+        "spaceName",
+        "date",
+        "startHour",
+        "durationHours",
+        "endHour",
+        "equipmentItems",
+        "spaceSubtotal",
+        "equipmentSubtotal",
+        "totalCost",
+        "pointsEarned",
+        "status",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BookingQueueEntry": {
+      "title": "BookingQueueEntry",
+      "description": "Waitlist queue entry when a requested kitchen space and hour slot is already occupied.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "chefName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "spaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 64
+        },
+        "spaceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "startHour": {
+          "type": "number"
+        },
+        "durationHours": {
+          "type": "number"
+        },
+        "endHour": {
+          "type": "number"
+        },
+        "equipmentItems": {
+          "type": "array"
+        },
+        "estimatedTotal": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "promoted", "cancelled"]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "chefName",
+        "spaceId",
+        "spaceName",
+        "date",
+        "startHour",
+        "durationHours",
+        "endHour",
+        "equipmentItems",
+        "estimatedTotal",
+        "status",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProductionBatch": {
+      "title": "ProductionBatch",
+      "description": "Daily production batch log book with product made, batch number, and quality test results.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "producerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "bookingId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "batchNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 48
+        },
+        "productName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "quantityProduced": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["units", "kg", "g", "L", "trays"]
+        },
+        "bakeTempC": {
+          "type": "number"
+        },
+        "textureScore": {
+          "type": "number"
+        },
+        "flavorScore": {
+          "type": "number"
+        },
+        "appearanceScore": {
+          "type": "number"
+        },
+        "qcScore": {
+          "type": "number"
+        },
+        "qcStatus": {
+          "type": "string",
+          "enum": ["passed", "hold", "failed"]
+        },
+        "productionNotes": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "attachedFormId": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "formResponseCount": {
+          "type": "number"
+        },
+        "formAvgRating": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "producerName",
+        "bookingId",
+        "date",
+        "batchNumber",
+        "productName",
+        "quantityProduced",
+        "unit",
+        "bakeTempC",
+        "textureScore",
+        "flavorScore",
+        "appearanceScore",
+        "qcScore",
+        "qcStatus",
+        "productionNotes",
+        "attachedFormId",
+        "formResponseCount",
+        "formAvgRating",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AttachedGoogleForm": {
+      "title": "AttachedGoogleForm",
+      "description": "Google Form generated from daily produced products and batch numbers to identify the best batch.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "formId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "responderUri": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "bookingId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "batchNumbers": {
+          "type": "array"
+        },
+        "productsSummary": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "responseCount": {
+          "type": "number"
+        },
+        "bestBatchNumber": {
+          "type": "string",
+          "maxLength": 48
+        },
+        "bestBatchScore": {
+          "type": "number"
+        },
+        "processType": {
+          "type": "string",
+          "enum": ["hot", "cold"]
+        },
+        "testedPricePoint": {
+          "type": "number"
+        },
+        "willingToPayPct": {
+          "type": "number"
+        },
+        "avgSweetness": {
+          "type": "number"
+        },
+        "customQuestions": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "formId",
+        "title",
+        "responderUri",
+        "date",
+        "bookingId",
+        "batchNumbers",
+        "productsSummary",
+        "responseCount",
+        "bestBatchNumber",
+        "bestBatchScore",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RawMaterial": {
+      "title": "RawMaterial",
+      "description": "Raw ingredient or packaging lot tracked for kitchen sessions.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "category": { "type": "string", "enum": ["Flour & Dry", "Dairy & Fats", "Produce", "Proteins", "Specialty", "Packaging"] },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string", "enum": ["kg", "g", "L", "mL", "units"] },
+        "unitCost": { "type": "number" },
+        "lotCode": { "type": "string", "maxLength": 60 },
+        "supplier": { "type": "string", "maxLength": 100 },
+        "storageZone": { "type": "string", "enum": ["Dry Pantry", "Walk-In Cooler", "Deep Freezer", "Prep Bench"] },
+        "bookingId": { "type": "string", "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "name", "category", "quantity", "unit", "unitCost", "lotCode", "supplier", "storageZone", "bookingId", "notes", "createdAt", "updatedAt"]
+    },
+    "RecipeTest": {
+      "title": "RecipeTest",
+      "description": "Formulation test record logged during a rented kitchen session.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "category": { "type": "string", "enum": ["Bakery", "Sauce & Emulsion", "Fermentation", "Plant-Based", "Confectionery", "Savory Prep"] },
+        "bookingId": { "type": "string", "maxLength": 128 },
+        "prepMinutes": { "type": "number" },
+        "targetTempC": { "type": "number" },
+        "yieldText": { "type": "string", "maxLength": 80 },
+        "ingredients": { "type": "array" },
+        "tastingNotes": { "type": "string", "maxLength": 1000 },
+        "outcome": { "type": "string", "enum": ["approved", "iterate", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "title", "version", "category", "bookingId", "prepMinutes", "targetTempC", "yieldText", "ingredients", "tastingNotes", "outcome", "createdAt", "updatedAt"]
+    },
+    "StaffMember": {
+      "title": "StaffMember",
+      "description": "Non-PII kitchen staff directory entry for duty assignment.",
+      "type": "object",
+      "properties": {
+        "staffCode": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 24 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "role": { "type": "string", "enum": ["Sous Chef", "Prep Cook", "Sanitation Lead", "Facility Tech", "R&D Baker"] },
+        "station": { "type": "string", "maxLength": 80 },
+        "shift": { "type": "string", "enum": ["Morning", "Midday", "Evening"] },
+        "linkedUid": { "type": "string", "maxLength": 128 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["staffCode", "name", "role", "station", "shift", "linkedUid", "isActive", "createdAt", "updatedAt"]
+    },
+    "StaffDuty": {
+      "title": "StaffDuty",
+      "description": "Operational or prep duty assigned to a staff member.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "assignedByUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "assignedByName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "staffId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "staffName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "assigneeUid": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "description": { "type": "string", "maxLength": 500 },
+        "station": { "type": "string", "maxLength": 100 },
+        "priority": { "type": "string", "enum": ["low", "normal", "urgent"] },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "bookingId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "completionNotes": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "assignedByUid", "assignedByName", "staffId", "staffName", "assigneeUid", "title", "description", "station", "priority", "dueDate", "bookingId", "status", "completionNotes", "createdAt", "updatedAt"]
+    },
+    "SessionLogEntry": {
+      "title": "SessionLogEntry",
+      "description": "Operational, sanitation, or audit log entry exportable as a .LOG file.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "actorName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "eventType": { "type": "string", "enum": ["booking", "material", "recipe", "duty", "sanitation", "equipment", "incident", "production"] },
+        "severity": { "type": "string", "enum": ["info", "warn", "critical"] },
+        "station": { "type": "string", "maxLength": 100 },
+        "tempReadingC": { "type": "string", "maxLength": 24 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "bookingId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "actorName", "eventType", "severity", "station", "tempReadingC", "message", "bookingId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": { "$ref": "#/entities/UserProfile" }, "description": "User profile records with loyalty points and hours booked." },
+    "/spaces/{spaceId}": { "schema": { "$ref": "#/entities/KitchenSpace" }, "description": "Commercial kitchen suites and stations." },
+    "/equipment/{equipmentId}": { "schema": { "$ref": "#/entities/KitchenEquipment" }, "description": "Commercial equipment units rentable hourly." },
+    "/availabilitySlots/{slotId}": { "schema": { "$ref": "#/entities/AvailabilitySlot" }, "description": "Non-PII booking time windows for collision detection and occupancy timetable." },
+    "/bookings/{bookingId}": { "schema": { "$ref": "#/entities/Booking" }, "description": "User kitchen and equipment hourly reservations." },
+    "/bookingQueue/{queueId}": { "schema": { "$ref": "#/entities/BookingQueueEntry" }, "description": "Waitlist queue entries for occupied time slots." },
+    "/productionBatches/{batchId}": { "schema": { "$ref": "#/entities/ProductionBatch" }, "description": "Daily production batches and test results." },
+    "/attachedForms/{formDocId}": { "schema": { "$ref": "#/entities/AttachedGoogleForm" }, "description": "Google Forms linked to daily production batches." },
+    "/rawMaterials/{materialId}": { "schema": { "$ref": "#/entities/RawMaterial" }, "description": "Raw material and ingredient inventory lots." },
+    "/recipes/{recipeId}": { "schema": { "$ref": "#/entities/RecipeTest" }, "description": "Tested recipe formulations and sensory notes." },
+    "/staff/{staffId}": { "schema": { "$ref": "#/entities/StaffMember" }, "description": "Kitchen staff directory without PII." },
+    "/duties/{dutyId}": { "schema": { "$ref": "#/entities/StaffDuty" }, "description": "Assigned duties for kitchen staff." },
+    "/logs/{logId}": { "schema": { "$ref": "#/entities/SessionLogEntry" }, "description": "Immutable operational and HACCP log entries." }
+  }
+}
