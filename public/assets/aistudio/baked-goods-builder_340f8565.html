@@ -1,0 +1,2654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>En Cuisine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F6F7F9; --panel:#FFFFFF; --ink:#1A1D23; --ink-soft:#6B7280;
+  --frost:#3452C4; --frost-dark:#26399A; --apricot:#B7791F; --mint:#16803D;
+  --line:#E3E6EB; --chip:#EEF1F5; --warn:#DC2626; --additive:#6D5AAE;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;font-size:13.5px;line-height:1.5;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel);}
+.brand{display:flex;align-items:baseline;gap:13px;}
+.brand .mark{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.02em;color:#fff;background:var(--frost);border-radius:6px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;text-transform:uppercase;padding:0;}
+.brand h1{font-family:'Inter',sans-serif;font-weight:700;font-size:16px;margin:0;letter-spacing:-.01em;color:var(--ink);}
+.brand-eyebrow{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:var(--ink-soft);margin-bottom:0;}
+.tpl-row{display:flex;gap:8px;}
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer;}
+.btn.ghost{background:var(--panel);color:var(--ink);border-color:var(--line);}
+.btn.ghost:hover{background:var(--chip);}
+.btn.primary{background:var(--frost);border-color:var(--frost);color:#fff;}
+.btn.primary:hover{background:var(--frost-dark);border-color:var(--frost-dark);}
+.btn.small{padding:5px 10px;font-size:12px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+.app-shell{display:flex;min-height:calc(100vh - 57px);}
+.app-content{flex:1;min-width:0;}
+.tabbar{width:220px;flex-shrink:0;border-right:1px solid var(--line);background:var(--panel);padding:12px 0;}
+.tab{padding:9px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--ink-soft);cursor:pointer;border-left:3px solid transparent;}
+.tab:hover{color:var(--ink);background:var(--chip);}
+.tab.active{color:var(--frost);font-weight:600;background:var(--chip);border-left-color:var(--frost);}
+
+.layout{display:grid;grid-template-columns:340px 1fr 360px;min-height:calc(100vh - 100px);}
+@media (max-width:1250px){.layout{grid-template-columns:1fr;}}
+
+.library{border-right:1px solid var(--line);padding:16px;overflow-y:auto;max-height:100vh;position:sticky;top:0;}
+.library h4{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:16px 0 6px;display:flex;justify-content:space-between;align-items:center;}
+.library h4:first-child{margin-top:0;}
+.add-inline-link{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--frost);cursor:pointer;text-transform:none;letter-spacing:0;}
+.searchbox{width:100%;border:1px solid var(--line);background:var(--panel);padding:9px 10px;font-family:inherit;font-size:13px;margin-bottom:10px;}
+.cat-toggle{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.process-group-header{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--frost);background:var(--chip);margin:16px -16px 6px;padding:6px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.process-group-header:first-child{margin-top:0;border-top:none;}
+.cat-chip{border:1px solid var(--line);background:var(--panel);padding:4px 9px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;cursor:pointer;}
+.cat-chip.active{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+.lib-item{border:1px solid var(--line);background:var(--panel);padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.lib-item:hover{border-color:var(--frost);}
+.lib-item .liname{font-weight:600;font-size:12px;cursor:pointer;}
+.lib-item .limeta{font-size:9.5px;color:var(--ink-soft);}
+.lib-item .e-code{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--additive);}
+.lib-item .btns{display:flex;gap:4px;flex-shrink:0;}
+.icon-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--frost);border:1px solid var(--frost);width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:var(--panel);}
+.icon-btn.cost{color:var(--apricot);border-color:var(--apricot);font-size:10px;}
+.allergen-flag{color:var(--warn);font-weight:700;font-size:9.5px;}
+.custom-tag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;background:var(--mint);color:#fff;padding:1px 5px;margin-left:4px;}
+
+main.builder{padding:20px 26px;overflow-y:auto;max-height:100vh;}
+.recipe-title-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.recipe-title-row input{font-family:'Inter',sans-serif;font-size:24px;font-weight:600;border:none;background:none;color:var(--ink);border-bottom:1px solid transparent;padding:2px 0;}
+.recipe-title-row input:focus{outline:none;border-bottom:1px solid var(--frost);}
+.servings-field{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft);}
+.servings-field input{width:50px;border:1px solid var(--line);padding:5px 6px;font-family:'IBM Plex Mono',monospace;}
+
+table.recipe-table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+table.recipe-table th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);text-align:left;padding:6px 8px;border-bottom:1px solid var(--ink);}
+table.recipe-table td{padding:7px 8px;border-bottom:1px solid var(--line);font-size:12.5px;vertical-align:middle;}
+table.recipe-table tr.section-row td{background:var(--chip);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);padding:5px 8px;}
+.gram-input{width:66px;border:1px solid var(--line);padding:5px 6px;font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;}
+.cost-val{font-family:'IBM Plex Mono',monospace;color:var(--frost);font-weight:700;}
+.ingredient-link{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px;}
+.ingredient-link:hover{color:var(--frost);text-decoration-color:var(--frost);}
+.supplier-input{width:100%;min-width:120px;border:1px solid var(--line);background:var(--panel);padding:5px 6px;font-family:inherit;font-size:11.5px;}
+.bp-val{font-family:'IBM Plex Mono',monospace;color:var(--frost);font-weight:700;}
+.rm-btn{color:var(--warn);cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:14px;}
+.additive-row td{color:var(--additive);}
+.empty-recipe{color:var(--ink-soft);font-style:italic;text-align:center;padding:30px 0;}
+
+.batch-total{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 8px;border-top:2px solid var(--ink);font-weight:700;margin-bottom:20px;}
+
+.method-box{border:1px solid var(--line);background:var(--panel);padding:16px;margin-bottom:20px;}
+.method-box h3{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 10px;}
+.method-box textarea{width:100%;min-height:80px;border:1px solid var(--line);background:var(--panel);padding:9px 10px;font-family:inherit;font-size:12.5px;resize:vertical;}
+
+.save-bar{border:1px solid var(--frost);background:rgba(46,110,116,.06);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.save-bar p{margin:0;font-size:11.5px;color:var(--ink-soft);max-width:400px;}
+
+.preview{border-left:1px solid var(--line);padding:20px;background:var(--panel);overflow-y:auto;max-height:100vh;position:sticky;top:0;}
+.ticket-head{background:var(--chip);border:1px solid var(--line);border-radius:6px;margin-bottom:18px;padding:12px 14px;position:relative;}
+.ticket-head .t-eyebrow{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:var(--ink-soft);margin-bottom:3px;}
+.ticket-head .t-name{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;line-height:1.2;padding-right:70px;}
+.ticket-head .t-code{position:absolute;top:12px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:2px 8px;}
+.preview h3{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:18px 0 8px;}
+.preview h3:first-child{margin-top:0;}
+.card{border:1px solid var(--line);padding:12px 14px;}
+.tc-row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted var(--line);font-size:11.5px;}
+.tc-row:last-child{border-bottom:none;}
+.tc-row .k{color:var(--ink-soft);}
+.tc-row .v{font-weight:700;text-align:right;}
+.nutri-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.nutri-cell{padding:8px 10px;border-right:1px dotted var(--line);border-bottom:1px dotted var(--line);}
+.nutri-cell:nth-child(2n){border-right:none;}
+.nutri-cell .num{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--frost);}
+.nutri-cell .lab{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);}
+.additive-chip{display:inline-block;background:rgba(138,95,176,.12);border:1px solid var(--additive);color:var(--additive);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 7px;margin:2px 3px 0 0;}
+.empty{color:var(--ink-soft);font-style:italic;font-size:11px;}
+.src-note{font-size:10px;color:var(--ink-soft);font-style:italic;margin-top:10px;line-height:1.5;}
+
+/* ---------- Saved recipes tab ---------- */
+.testing-wrap{padding:22px 30px;}
+.project-card{border:1px solid var(--line);background:var(--panel);margin-bottom:16px;}
+.project-head{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);}
+.project-head .pname{font-family:'Inter',sans-serif;font-size:18px;font-weight:600;}
+.project-head .pmeta{font-size:11px;color:var(--ink-soft);}
+.version-row{padding:12px 18px;border-bottom:1px dotted var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.version-row:last-child{border-bottom:none;}
+.vlabel{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;}
+.status-pill{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;margin-left:8px;}
+.status-draft{background:#EFE7D6;color:var(--ink-soft);}
+.status-testing{background:rgba(226,140,76,.2);color:var(--apricot);}
+.status-approved{background:rgba(94,154,114,.2);color:var(--mint);}
+.status-rejected{background:rgba(194,91,74,.2);color:var(--warn);}
+.score-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--frost);color:#fff;padding:2px 8px;margin-left:6px;}
+.vrationale{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+.vtest-line{font-size:10.5px;color:var(--ink-soft);margin-top:5px;}
+.dot-menu-wrap{position:relative;}
+.dot-btn{font-family:'IBM Plex Mono',monospace;font-size:16px;cursor:pointer;padding:2px 8px;color:var(--ink-soft);}
+.dot-btn:hover{color:var(--ink);}
+.dot-dropdown{display:none;position:absolute;right:0;top:26px;background:var(--panel);border:1px solid var(--ink);min-width:190px;z-index:20;}
+.dot-dropdown.open{display:block;}
+.dot-dropdown div{padding:9px 14px;font-size:11.5px;cursor:pointer;border-bottom:1px solid var(--line);}
+.dot-dropdown div:last-child{border-bottom:none;}
+.dot-dropdown div:hover{background:var(--chip);}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(30,43,42,.5);display:none;align-items:center;justify-content:center;z-index:50;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--panel);border:1px solid var(--ink);padding:26px;width:680px;max-width:92vw;max-height:88vh;overflow-y:auto;overflow-x:hidden;}
+.modal h3{font-family:'Inter',sans-serif;font-size:19px;margin:0 0 14px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:140px;}
+.field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:700;}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--panel);padding:8px 9px;font-family:inherit;font-size:13px;}
+.field textarea{min-height:60px;resize:vertical;}
+.field-row{display:flex;gap:12px;flex-wrap:wrap;}
+.field-row .field{flex:1;}
+.warn-box{background:var(--chip);border-left:2px solid var(--apricot);padding:9px 12px;font-size:11.5px;margin-bottom:14px;}
+.ai-lookup-bar{display:flex;gap:8px;margin-bottom:6px;}
+.ai-lookup-bar input{flex:1;border:1px solid var(--line);background:var(--panel);padding:9px 10px;font-family:inherit;font-size:13px;}
+.computed-cost-preview{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--frost);font-weight:700;padding:8px 0;}
+.diff-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.diff-table td{padding:5px 0;border-bottom:1px dotted var(--line);}
+.err-text{color:var(--warn);font-size:11.5px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="mark">EC</span><div><div class="brand-eyebrow">Enhanced Cuisine</div><h1>En Cuisine</h1></div></div>
+  <div class="tpl-row">
+    <button class="btn ghost" onclick="loadTemplate('banana_cake')">Load Banana Cake template</button>
+    <button class="btn ghost" onclick="resetRecipe()">Start blank</button>
+    <input type="file" id="importRecipeFile" accept=".json" style="display:none" onchange="handleImportRecipeFile(event)">
+    <button class="btn ghost" onclick="document.getElementById('importRecipeFile').click()">📂 Import recipe (JSON)</button>
+    <button class="btn primary" onclick="openExportModal()">Export ▾</button>
+  </div>
+</div>
+
+<div class="app-shell">
+<div class="tabbar" id="tabbar"></div>
+<div class="app-content">
+
+<div id="builderView">
+  <div class="layout">
+    <div class="library">
+      <input type="text" class="searchbox" id="searchBox" placeholder="Search ingredients (e.g. flour, sorbate, E160a)…" oninput="renderLibrary()">
+      <div class="cat-toggle" id="catToggle"></div>
+      <div id="libraryList"></div>
+    </div>
+
+    <main class="builder">
+      <div class="recipe-title-row">
+        <input type="text" id="recipeName" value="Banana Cake" oninput="renderPreview()">
+        <div class="servings-field">Weight per piece <input type="number" id="unitWeightG" value="90" min="1" oninput="renderAll()"> g</div>
+      </div>
+      <table class="recipe-table" id="recipeTable"></table>
+      <div class="batch-total" id="batchTotal"></div>
+
+      <div class="method-box">
+        <h3>Method / process notes</h3>
+        <textarea id="methodNotes" placeholder="Mixing order, oven temp, bake time, cooling…">Cream sugar and oil. Add eggs one at a time. Fold in mashed banana. Sift dry ingredients separately, fold in gently. Pour into lined tin. Bake 175°C / 347°F for 45–50 min until skewer comes out clean.</textarea>
+      </div>
+
+      <div class="save-bar">
+        <p>Save this formulation as a version under a recipe project — every save requires a short rationale so the iteration history stays meaningful.</p>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost" onclick="openViewRecipeModal()">📋 View recipe</button>
+          <button class="btn primary" onclick="openSaveVersionModal()">💾 Save as version</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="preview" id="previewPanel"></aside>
+  </div>
+</div>
+
+<div id="costingView" class="testing-wrap" style="display:none;"></div>
+
+<div id="inventoryView" class="testing-wrap" style="display:none;"></div>
+
+<div id="testingView" style="display:none;"></div>
+
+</div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modalBody"></div></div>
+<datalist id="supplierOptions">
+  <option value="Americana">
+  <option value="IFFCO">
+  <option value="Al Kabeer">
+  <option value="Rawabi">
+  <option value="Local Market Supplier">
+  <option value="Bulk Distributor A">
+  <option value="Bulk Distributor B">
+  <option value="Generic / Unspecified">
+</datalist>
+
+<script>
+/* ================================================================
+   INGREDIENT LIBRARY — baked goods focus. Nutrition = per-100g
+   estimates from standard reference composition data. Additive
+   dosage ranges reflect typical EU permitted-use levels — confirm
+   against current EU 1333/2008 (or your local regulator) before use.
+================================================================= */
+const LIBRARY = [
+  {id:'fl_ap',name:'All-Purpose Flour',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.1,kcal:364,fat:1.0,satFat:0.2,sugar:0.3,protein:10.3,carbs:76,note:'General baking standard, 10–11% protein'},
+  {id:'fl_00',name:'"00" Flour (Italian, fine milled)',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.4,kcal:353,fat:1.5,satFat:0.3,sugar:0.3,protein:11.0,carbs:74,note:'Very fine grind, 11–12.5% protein'},
+  {id:'fl_bread',name:'Bread Flour (high protein)',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.2,kcal:361,fat:1.5,satFat:0.2,sugar:0.3,protein:13.0,carbs:73,note:'12.5–14% protein, chewy structure'},
+  {id:'fl_cake',name:'Cake Flour (low protein, chlorinated)',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.6,kcal:362,fat:0.8,satFat:0.1,sugar:0.3,protein:8.0,carbs:78,note:'7–9% protein, tender fine crumb'},
+  {id:'fl_selfrising',name:'Self-Rising Flour',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.3,kcal:362,fat:1.0,satFat:0.2,sugar:0.3,protein:9.7,carbs:77,note:'Pre-blended with baking powder + salt'},
+  {id:'fl_wholewheat',name:'Whole Wheat Flour',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.2,kcal:340,fat:2.5,satFat:0.4,sugar:0.4,protein:13.2,carbs:72,note:'Higher fiber, denser crumb'},
+  {id:'fl_protein',name:'Protein-Enriched Flour (vital gluten added)',cat:'Flours',vegan:true,allergens:['gluten'],costKg:2.0,kcal:358,fat:1.2,satFat:0.2,sugar:0.3,protein:16.0,carbs:70,note:'AP + added vital gluten, 15–18% protein'},
+  {id:'fl_almond',name:'Almond Flour',cat:'Flours',vegan:true,allergens:['tree nuts'],costKg:9.5,kcal:571,fat:50.0,satFat:4.0,sugar:4.4,protein:21.0,carbs:20,note:'Gluten-free, moist, dense'},
+  {id:'fl_coconut',name:'Coconut Flour',cat:'Flours',vegan:true,allergens:['tree nuts'],costKg:6.0,kcal:400,fat:13.3,satFat:11.8,sugar:7.0,protein:19.0,carbs:60,note:'Very absorbent, gluten-free'},
+  {id:'fl_rice',name:'Rice Flour (white)',cat:'Flours',vegan:true,allergens:[],costKg:2.2,kcal:366,fat:1.4,satFat:0.4,sugar:0.1,protein:6.0,carbs:80,note:'Gluten-free, fine texture'},
+  {id:'fl_oat',name:'Oat Flour',cat:'Flours',vegan:true,allergens:['gluten (cross-contact common)'],costKg:2.8,kcal:404,fat:9.0,satFat:1.6,sugar:1.0,protein:15.0,carbs:66,note:'Mild sweetness, low gluten'},
+  {id:'fl_semolina',name:'Semolina (Durum) Flour',cat:'Flours',vegan:true,allergens:['gluten'],costKg:1.5,kcal:360,fat:1.1,satFat:0.2,sugar:0.7,protein:12.7,carbs:73,note:'Coarse, high protein'},
+
+  {id:'oil_sunflower',name:'Sunflower Oil',cat:'Fats & Oils',vegan:true,allergens:[],costKg:2.3,kcal:884,fat:100,satFat:10.3,sugar:0,protein:0,carbs:0,note:'Neutral flavour, common default'},
+  {id:'oil_canola',name:'Canola Oil',cat:'Fats & Oils',vegan:true,allergens:[],costKg:2.1,kcal:884,fat:100,satFat:7.4,sugar:0,protein:0,carbs:0,note:'Lowest sat. fat of common oils'},
+  {id:'oil_canola_sunflower_blend',name:'Canola-Sunflower Blend',cat:'Fats & Oils',vegan:true,allergens:[],costKg:2.0,kcal:884,fat:100,satFat:8.8,sugar:0,protein:0,carbs:0,note:'Common commercial "vegetable oil" blend'},
+  {id:'oil_vegblend',name:'Vegetable Oil Blend (mixed seed)',cat:'Fats & Oils',vegan:true,allergens:[],costKg:1.9,kcal:884,fat:100,satFat:12.0,sugar:0,protein:0,carbs:0,note:'Lowest cost, composition varies by supplier'},
+  {id:'oil_corn',name:'Corn Oil',cat:'Fats & Oils',vegan:true,allergens:[],costKg:2.4,kcal:884,fat:100,satFat:12.7,sugar:0,protein:0,carbs:0,note:'Mild flavour, high smoke point'},
+  {id:'oil_oliveevoo',name:'Extra Virgin Olive Oil',cat:'Fats & Oils',vegan:true,allergens:[],costKg:7.5,kcal:884,fat:100,satFat:13.8,sugar:0,protein:0,carbs:0,note:'Distinct flavour'},
+  {id:'oil_coconut',name:'Coconut Oil (refined)',cat:'Fats & Oils',vegan:true,allergens:['tree nuts (per some regulatory lists)'],costKg:4.5,kcal:862,fat:100,satFat:86.5,sugar:0,protein:0,carbs:0,note:'Solid below ~24°C'},
+  {id:'butter_unsalted',name:'Unsalted Butter',cat:'Fats & Oils',vegan:false,allergens:['dairy'],costKg:8.5,kcal:717,fat:81,satFat:51.4,sugar:0.1,protein:0.9,carbs:0.1,note:'Standard creaming method'},
+  {id:'butter_salted',name:'Salted Butter',cat:'Fats & Oils',vegan:false,allergens:['dairy'],costKg:8.2,kcal:714,fat:81,satFat:51.4,sugar:0.1,protein:0.9,carbs:0.1,note:'Reduce added salt if substituting'},
+  {id:'margarine',name:'Margarine (baking)',cat:'Fats & Oils',vegan:true,allergens:[],costKg:4.0,kcal:717,fat:80,satFat:20.0,sugar:0.5,protein:0.2,carbs:1.0,note:'Vegan butter substitute'},
+  {id:'ghee',name:'Ghee (clarified butter)',cat:'Fats & Oils',vegan:false,allergens:['dairy (trace)'],costKg:12.0,kcal:900,fat:100,satFat:62.0,sugar:0,protein:0.3,carbs:0,note:'Nutty flavour, high smoke point'},
+
+  {id:'sugar_white',name:'Granulated White Sugar',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:0.9,kcal:387,fat:0,satFat:0,sugar:100,protein:0,carbs:100,note:'Standard sucrose'},
+  {id:'sugar_brown_light',name:'Light Brown Sugar',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:1.1,kcal:380,fat:0,satFat:0,sugar:97,protein:0.1,carbs:98,note:'Adds molasses moisture + flavour'},
+  {id:'sugar_brown_dark',name:'Dark Brown Sugar',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:1.2,kcal:373,fat:0,satFat:0,sugar:95,protein:0.1,carbs:96,note:'Stronger molasses flavour'},
+  {id:'sugar_powdered',name:'Powdered (Icing) Sugar',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:1.3,kcal:389,fat:0,satFat:0,sugar:99.7,protein:0,carbs:99.8,note:'~3% cornstarch anti-caking'},
+  {id:'honey',name:'Honey',cat:'Sugars & Sweeteners',vegan:false,allergens:[],costKg:6.5,kcal:304,fat:0,satFat:0,sugar:82,protein:0.3,carbs:82,note:'Adds moisture and browning'},
+  {id:'maple_syrup',name:'Maple Syrup',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:9.0,kcal:260,fat:0.2,satFat:0,sugar:60,protein:0,carbs:67,note:'Distinct flavour, liquid'},
+  {id:'glucose_syrup',name:'Glucose Syrup',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:2.0,kcal:316,fat:0,satFat:0,sugar:80,protein:0,carbs:80,note:'Improves moisture retention/shelf life'},
+  {id:'erythritol',name:'Erythritol (bulk sweetener)',cat:'Sugars & Sweeteners',vegan:true,allergens:[],costKg:5.5,kcal:20,fat:0,satFat:0,sugar:0,protein:0,carbs:100,note:'~70% sweetness of sucrose'},
+
+  {id:'egg_whole',name:'Whole Eggs (fresh, ~50g each)',cat:'Eggs & Dairy',vegan:false,allergens:['egg'],costKg:4.5,costUnit:'piece',pieceWeightG:50,kcal:143,fat:9.5,satFat:3.1,sugar:0.4,protein:12.6,carbs:0.7,note:'~50g per large egg — costed per piece since eggs are bought by the dozen/tray, not by weight'},
+  {id:'egg_white',name:'Egg White (liquid)',cat:'Eggs & Dairy',vegan:false,allergens:['egg'],costKg:5.0,kcal:52,fat:0.2,satFat:0,sugar:0.7,protein:11.0,carbs:0.7,note:'Structure/aeration without fat'},
+  {id:'egg_yolk',name:'Egg Yolk (liquid)',cat:'Eggs & Dairy',vegan:false,allergens:['egg'],costKg:6.5,kcal:322,fat:27.0,satFat:9.6,sugar:0.6,protein:15.9,carbs:3.6,note:'Richness, emulsification, colour'},
+  {id:'egg_replacer',name:'Liquid Egg Substitute (vegan)',cat:'Eggs & Dairy',vegan:true,allergens:[],costKg:6.0,kcal:60,fat:0.5,satFat:0,sugar:2.0,protein:1.0,carbs:12,note:'Binding substitute, texture differs'},
+  {id:'milk_whole',name:'Whole Milk',cat:'Eggs & Dairy',vegan:false,allergens:['dairy'],costKg:1.0,kcal:61,fat:3.3,satFat:1.9,sugar:5.1,protein:3.2,carbs:4.8,note:'Standard liquid dairy'},
+  {id:'buttermilk',name:'Buttermilk',cat:'Eggs & Dairy',vegan:false,allergens:['dairy'],costKg:1.4,kcal:40,fat:1.0,satFat:0.6,sugar:4.8,protein:3.3,carbs:4.9,note:'Acidic — activates baking soda'},
+  {id:'yogurt_plain',name:'Plain Yogurt',cat:'Eggs & Dairy',vegan:false,allergens:['dairy'],costKg:2.5,kcal:61,fat:3.3,satFat:2.1,sugar:4.7,protein:3.5,carbs:4.7,note:'Moisture + tenderizing acid'},
+  {id:'cream_heavy',name:'Heavy Cream',cat:'Eggs & Dairy',vegan:false,allergens:['dairy'],costKg:4.0,kcal:340,fat:36.0,satFat:23.0,sugar:2.8,protein:2.1,carbs:2.8,note:'Richness for batters/fillings'},
+  {id:'condensed_milk',name:'Sweetened Condensed Milk',cat:'Eggs & Dairy',vegan:false,allergens:['dairy'],costKg:3.0,kcal:321,fat:8.7,satFat:5.5,sugar:54.0,protein:7.9,carbs:54.4,note:'Sweetener + moisture + richness'},
+
+  {id:'banana_mashed',name:'Ripe Banana (mashed)',cat:'Fruit & Mash',vegan:true,allergens:[],costKg:1.2,wastagePct:40,kcal:89,fat:0.3,satFat:0.1,sugar:12.2,protein:1.1,carbs:23,note:'Bought whole with peel — 40% peel/trim loss, so cost/kg is calibrated up to reflect the edible flesh you actually get. Nutrition is per 100g of edible flesh, unaffected by wastage.'},
+  {id:'applesauce',name:'Unsweetened Applesauce',cat:'Fruit & Mash',vegan:true,allergens:[],costKg:1.5,kcal:42,fat:0.1,satFat:0,sugar:9.0,protein:0.2,carbs:11.3,note:'Common oil/egg replacer'},
+  {id:'pumpkin_puree',name:'Pumpkin Purée',cat:'Fruit & Mash',vegan:true,allergens:[],costKg:2.0,kcal:34,fat:0.1,satFat:0.1,sugar:2.8,protein:1.0,carbs:8.1,note:'Moisture + colour + mild sweetness'},
+
+  // ---------- MEAT & PROTEIN ----------
+  // Nutrition and cost are per 100g RAW, already-trimmed weight (bone/skin removed) —
+  // wastagePct here means additional trim loss on top of that, not cooking loss.
+  // Cooking loss (moisture/fat lost during roasting, frying, braising etc.) happens to the
+  // whole batch AFTER these go into a recipe — that's what the Costing Engine's
+  // "Estimated cooking loss %" field is for, not this ingredient-level field. See each
+  // item's note for a realistic cooking-loss range to use there.
+  {id:'chicken_breast',name:'Chicken Breast (boneless, skinless, raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:2.5,wastagePct:0,kcal:165,fat:3.6,satFat:1.0,sugar:0,protein:31.0,carbs:0,note:'Cooking loss: grilled/roasted ~25–30%, poached ~15–20% — set in Costing Engine.'},
+  {id:'chicken_whole',name:'Whole Chicken (raw, bone-in)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:1.8,wastagePct:0,kcal:215,fat:15.0,satFat:4.3,sugar:0,protein:18.6,carbs:0,note:'Roasted whole cooking loss ~30%. If deboning before use, trim loss (bone/skin) is separately ~25–30% — edit wastagePct for that use case.'},
+  {id:'ground_beef',name:'Ground Beef (80/20, raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:4.0,wastagePct:0,kcal:254,fat:20.0,satFat:7.8,sugar:0,protein:17.0,carbs:0,note:'Pan-fried cooking loss ~25–30%, mostly rendered fat.'},
+  {id:'beef_chuck',name:'Beef Chuck Roast (raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:5.5,wastagePct:0,kcal:257,fat:20.0,satFat:8.0,sugar:0,protein:17.5,carbs:0,note:'Braised/roasted cooking loss ~30–35%.'},
+  {id:'pork_shoulder',name:'Pork Shoulder (raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:3.5,wastagePct:0,kcal:262,fat:21.0,satFat:7.6,sugar:0,protein:16.9,carbs:0,note:'Roasted/braised cooking loss ~30–35%.'},
+  {id:'bacon_raw',name:'Bacon (raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:7.0,wastagePct:0,kcal:541,fat:42.0,satFat:14.0,sugar:1.4,protein:37.0,carbs:1.4,note:'Pan-fried cooking loss ~45–50% — very high due to fat rendering.'},
+  {id:'lamb_shoulder',name:'Lamb Shoulder (raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:7.5,wastagePct:0,kcal:258,fat:20.9,satFat:8.8,sugar:0,protein:16.4,carbs:0,note:'Roasted cooking loss ~30–32%.'},
+  {id:'salmon_fillet',name:'Salmon Fillet (raw)',cat:'Meat & Protein',vegan:false,allergens:['fish'],costKg:9.0,wastagePct:0,kcal:208,fat:13.0,satFat:3.1,sugar:0,protein:20.0,carbs:0,note:'Baked cooking loss ~18–20%.'},
+  {id:'turkey_breast',name:'Turkey Breast (raw)',cat:'Meat & Protein',vegan:false,allergens:[],costKg:4.0,wastagePct:0,kcal:135,fat:1.0,satFat:0.3,sugar:0,protein:30.0,carbs:0,note:'Roasted cooking loss ~25–30%.'},
+
+  {id:'baking_powder',name:'Baking Powder (double-acting)',cat:'Leavening',vegan:true,allergens:[],costKg:5.0,kcal:53,fat:0,satFat:0,sugar:0,protein:0,carbs:28,note:'Typical use 1–2% of flour weight'},
+  {id:'baking_soda',name:'Baking Soda (sodium bicarbonate)',cat:'Leavening',vegan:true,allergens:[],costKg:2.5,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Needs an acidic ingredient to activate'},
+  {id:'cream_tartar',name:'Cream of Tartar',cat:'Leavening',vegan:true,allergens:[],costKg:11.0,kcal:258,fat:0,satFat:0,sugar:0,protein:0,carbs:64,note:'Stabilizes whipped egg whites'},
+  {id:'yeast_instant',name:'Instant Dry Yeast',cat:'Leavening',vegan:true,allergens:[],costKg:9.0,kcal:325,fat:1.9,satFat:0.3,sugar:0,protein:40.4,carbs:41.2,note:'For enriched/yeasted baked goods'},
+
+  {id:'salt',name:'Fine Salt',cat:'Salt & Misc',vegan:true,allergens:[],costKg:0.6,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Typical use 0.5–1% of flour weight'},
+  {id:'vanilla_extract',name:'Pure Vanilla Extract',cat:'Salt & Misc',vegan:true,allergens:[],costKg:38.0,kcal:288,fat:0.1,satFat:0,sugar:12.7,protein:0.1,carbs:12.7,note:'Typical use 0.5–1% of batter weight'},
+  {id:'cinnamon',name:'Ground Cinnamon',cat:'Salt & Misc',vegan:true,allergens:[],costKg:16.0,kcal:247,fat:1.2,satFat:0.3,sugar:2.2,protein:4.0,carbs:81,note:'Common banana cake spice'},
+  {id:'walnuts',name:'Chopped Walnuts',cat:'Salt & Misc',vegan:true,allergens:['tree nuts'],costKg:12.0,kcal:654,fat:65.0,satFat:6.1,sugar:2.6,protein:15.0,carbs:14,note:'Common banana cake inclusion'},
+  {id:'choc_chips',name:'Chocolate Chips (semi-sweet)',cat:'Salt & Misc',vegan:false,allergens:['dairy'],costKg:9.0,kcal:479,fat:29.7,satFat:17.7,sugar:52.4,protein:4.2,carbs:63.1,note:'Check brand for dairy/soy lecithin'},
+
+  {id:'e200',name:'Sorbic Acid',ecode:'E200',cat:'Preservatives',vegan:true,allergens:[],costKg:9.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.05–0.2% of batter weight',func:'Antimicrobial — inhibits mould/yeast growth'},
+  {id:'e202',name:'Potassium Sorbate',ecode:'E202',cat:'Preservatives',vegan:true,allergens:[],costKg:8.5,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.05–0.2% of batter weight',func:'Antimicrobial, water-soluble'},
+  {id:'e282',name:'Calcium Propionate',ecode:'E282',cat:'Preservatives',vegan:true,allergens:[],costKg:7.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.1–0.3% of flour weight',func:'Anti-mould for bread/cake'},
+  {id:'e300',name:'Ascorbic Acid (Vitamin C)',ecode:'E300',cat:'Preservatives',vegan:true,allergens:[],costKg:12.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.001–0.01% of flour weight',func:'Dough conditioner / antioxidant'},
+  {id:'e223',name:'Sodium Metabisulphite',ecode:'E223',cat:'Preservatives',vegan:true,allergens:['sulphites'],costKg:6.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'trace — max varies by region',func:'Antioxidant/preservative, declarable allergen'},
+
+  {id:'e322',name:'Lecithin (soy)',ecode:'E322',cat:'Emulsifiers',vegan:true,allergens:['soy'],costKg:10.0,kcal:763,fat:100,satFat:15.0,sugar:0,protein:0,carbs:0,dosage:'0.2–0.5% of batter weight',func:'Emulsifier — batter uniformity'},
+  {id:'e471',name:'Mono- and Diglycerides of Fatty Acids',ecode:'E471',cat:'Emulsifiers',vegan:false,allergens:[],costKg:8.0,kcal:900,fat:100,satFat:35.0,sugar:0,protein:0,carbs:0,dosage:'0.3–1% of batter weight',func:'Emulsifier — softness/shelf-life; source varies, confirm with supplier'},
+  {id:'e410',name:'Locust Bean Gum',ecode:'E410',cat:'Emulsifiers',vegan:true,allergens:[],costKg:16.0,kcal:335,fat:1.0,satFat:0,sugar:0,protein:5.0,carbs:80,dosage:'0.1–0.3% of batter weight',func:'Thickener/stabilizer'},
+  {id:'e415',name:'Xanthan Gum',ecode:'E415',cat:'Emulsifiers',vegan:true,allergens:[],costKg:15.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.1–0.5% of batter weight',func:'Thickener, esp. gluten-free structure'},
+
+  {id:'e100',name:'Curcumin (Turmeric extract)',ecode:'E100',cat:'Colours',vegan:true,allergens:[],costKg:40.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.001–0.01% of batter weight',func:'Natural yellow colourant'},
+  {id:'e101',name:'Riboflavin (Vitamin B2)',ecode:'E101',cat:'Colours',vegan:true,allergens:[],costKg:60.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'trace',func:'Yellow-orange colourant, also a vitamin'},
+  {id:'e120',name:'Carmine (Cochineal)',ecode:'E120',cat:'Colours',vegan:false,allergens:[],costKg:120.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'trace',func:'Red colourant — insect-derived, not vegan'},
+  {id:'e133',name:'Brilliant Blue FCF',ecode:'E133',cat:'Colours',vegan:true,allergens:[],costKg:30.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'trace',func:'Synthetic blue — some regions require warning label'},
+  {id:'e150a',name:'Caramel Colour (plain)',ecode:'E150a',cat:'Colours',vegan:true,allergens:[],costKg:5.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'0.01–0.1% of batter weight',func:'Brown colourant'},
+  {id:'e160a',name:'Beta-Carotene',ecode:'E160a',cat:'Colours',vegan:true,allergens:[],costKg:25.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'trace',func:'Natural orange-yellow, provitamin A'},
+  {id:'e163',name:'Anthocyanins',ecode:'E163',cat:'Colours',vegan:true,allergens:[],costKg:35.0,kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,dosage:'trace',func:'Natural red-purple colourant'},
+
+  // ---------- PACKING MATERIALS ----------
+  // costUnit:'roll' items are flexible film sold as a roll (length × width, optionally by GSM/weight);
+  // cost per package is derived from how much film length each pack consumes off that roll.
+  // costUnit:'unit' items are simple piece goods (boxes, labels) — bought and used per unit, no weight math.
+  {id:'pk_bopp_clear',name:'BOPP Flow Wrap Film (Clear, 20 micron)',cat:'Packing Materials',costUnit:'roll',vegan:true,allergens:[],
+    rollLengthM:4000, rollWidthMM:280, gsm:20, costPerRoll:45.0, wrapLengthCmPerUnit:18,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Clear flow-wrap film — cost/pack derived from roll length ÷ wrap length per pack'},
+  {id:'pk_bopp_printed',name:'BOPP Flow Wrap Film (Printed, custom branding)',cat:'Packing Materials',costUnit:'roll',vegan:true,allergens:[],
+    rollLengthM:3000, rollWidthMM:280, gsm:25, costPerRoll:85.0, wrapLengthCmPerUnit:18,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Printed/branded film — shorter typical roll run, higher cost/kg than clear'},
+  {id:'pk_box_small',name:'Cardboard Box (Small, single slice)',cat:'Packing Materials',costUnit:'unit',vegan:true,allergens:[],costPerUnit:0.045,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Single-portion box'},
+  {id:'pk_box_large',name:'Cardboard Box (Large, whole cake)',cat:'Packing Materials',costUnit:'unit',vegan:true,allergens:[],costPerUnit:0.28,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Whole-cake box'},
+  {id:'pk_label',name:'Product Label / Sticker',cat:'Packing Materials',costUnit:'unit',vegan:true,allergens:[],costPerUnit:0.012,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Printed label, incl. ingredient/allergen declaration'},
+  {id:'pk_paperbag',name:'Paper Bag (branded)',cat:'Packing Materials',costUnit:'unit',vegan:true,allergens:[],costPerUnit:0.06,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Take-away paper bag'},
+  {id:'pk_shrink_sleeve',name:'Shrink Sleeve (PVC/PETG, printed)',cat:'Packing Materials',costUnit:'roll',vegan:true,allergens:[],
+    rollLengthM:1500, rollWidthMM:120, gsm:40, costPerRoll:60.0, wrapLengthCmPerUnit:9,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Full-body shrink sleeve — wrap length here is the sleeve height/cut length per container, not a wrap-around length'},
+  {id:'pk_tamper_band',name:'Tamper-Evident Band',cat:'Packing Materials',costUnit:'unit',vegan:true,allergens:[],costPerUnit:0.018,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Perforated shrink band applied over lid/box seam'},
+  {id:'pk_cakeboard',name:'Printed Cake Board (round, branded)',cat:'Packing Materials',costUnit:'unit',vegan:true,allergens:[],costPerUnit:0.15,
+    kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,note:'Rigid board base under whole cakes, printed with brand/logo'},
+
+  // ---------- CHINESE CUISINE ----------
+  {id:'cn_soysauce',name:'Soy Sauce (light)',cat:'Chinese Cuisine',vegan:true,allergens:['soy','gluten'],costKg:2.0,kcal:53,fat:0.1,satFat:0,sugar:0.4,protein:8.1,carbs:4.9,note:'Base seasoning for stir-fries, marinades'},
+  {id:'cn_sesameoil',name:'Sesame Oil (toasted)',cat:'Chinese Cuisine',vegan:true,allergens:['sesame'],costKg:6.5,kcal:884,fat:100,satFat:14.2,sugar:0,protein:0,carbs:0,note:'Finishing oil, strong aroma, used sparingly'},
+  {id:'cn_oystersauce',name:'Oyster Sauce',cat:'Chinese Cuisine',vegan:false,allergens:['shellfish'],costKg:3.0,kcal:51,fat:0.3,satFat:0.1,sugar:9.0,protein:1.4,carbs:11.0,note:'Umami base for stir-fries and braises'},
+  {id:'cn_ricevinegar',name:'Rice Vinegar',cat:'Chinese Cuisine',vegan:true,allergens:[],costKg:1.8,kcal:18,fat:0,satFat:0,sugar:0.3,protein:0,carbs:0.6,note:'Mild acidity for dressings, sweet-sour sauces'},
+  {id:'cn_shaoxing',name:'Shaoxing Wine',cat:'Chinese Cuisine',vegan:true,allergens:[],costKg:3.5,kcal:121,fat:0,satFat:0,sugar:0.5,protein:0.6,carbs:4.0,note:'Cooking wine for marinades and braises'},
+  {id:'cn_fivespice',name:'Five-Spice Powder',cat:'Chinese Cuisine',vegan:true,allergens:[],costKg:18.0,kcal:344,fat:12.0,satFat:4.0,sugar:2.0,protein:8.0,carbs:65.0,note:'Star anise, clove, cinnamon, fennel, Sichuan pepper blend'},
+  {id:'cn_ginger',name:'Fresh Ginger',cat:'Chinese Cuisine',vegan:true,allergens:[],costKg:3.0,kcal:80,fat:0.8,satFat:0.2,sugar:1.7,protein:1.8,carbs:18.0,note:'Aromatic base, used across most savory dishes'},
+  {id:'cn_hoisin',name:'Hoisin Sauce',cat:'Chinese Cuisine',vegan:true,allergens:['soy','gluten'],costKg:3.5,kcal:220,fat:3.4,satFat:0.6,sugar:32.0,protein:3.0,carbs:44.0,note:'Sweet-savory glaze and dipping sauce'},
+  {id:'cn_cornstarch',name:'Cornstarch (for slurry)',cat:'Chinese Cuisine',vegan:true,allergens:[],costKg:1.2,kcal:381,fat:0.1,satFat:0,sugar:0,protein:0.3,carbs:91.0,note:'Thickener for sauces, velveting meat before stir-fry'},
+
+  // ---------- INDIAN CUISINE ----------
+  {id:'in_garammasala',name:'Garam Masala',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:15.0,kcal:379,fat:15.0,satFat:2.0,sugar:3.0,protein:14.0,carbs:55.0,note:'Warming spice blend, finished into dishes at the end of cooking'},
+  {id:'in_turmeric',name:'Turmeric Powder',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:8.0,kcal:312,fat:3.3,satFat:1.8,sugar:3.2,protein:9.7,carbs:67.0,note:'Base colour and earthy flavour in most curries'},
+  {id:'in_cuminseed',name:'Cumin Seeds',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:6.0,kcal:375,fat:22.3,satFat:1.5,sugar:2.3,protein:17.8,carbs:44.2,note:'Tempered in hot oil (tadka) as a flavour base'},
+  {id:'in_basmati',name:'Basmati Rice',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:2.5,kcal:356,fat:0.9,satFat:0.2,sugar:0.1,protein:7.1,carbs:78.0,note:'Long-grain aromatic rice'},
+  {id:'in_redlentils',name:'Red Lentils (Masoor Dal)',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:2.0,kcal:352,fat:1.1,satFat:0.2,sugar:2.0,protein:24.0,carbs:63.0,note:'Fast-cooking dal, common everyday protein'},
+  {id:'in_gingergarlic',name:'Ginger-Garlic Paste',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:3.5,kcal:90,fat:0.5,satFat:0.1,sugar:3.0,protein:3.0,carbs:18.0,note:'Standard aromatic base for curries'},
+  {id:'in_tamarind',name:'Tamarind Paste',cat:'Indian Cuisine',vegan:true,allergens:[],costKg:4.0,kcal:239,fat:0.6,satFat:0.2,sugar:57.0,protein:2.8,carbs:63.0,note:'Sour note in curries, chutneys, sambar'},
+  {id:'in_paneer',name:'Paneer',cat:'Indian Cuisine',vegan:false,allergens:['dairy'],costKg:6.0,kcal:265,fat:20.8,satFat:13.3,sugar:2.6,protein:18.3,carbs:3.6,note:'Fresh non-melting cheese for curries and grilling'},
+
+  // ---------- MEXICAN CUISINE ----------
+  {id:'mx_masaharina',name:'Corn Masa Harina',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:2.0,kcal:363,fat:3.8,satFat:0.5,sugar:1.5,protein:8.3,carbs:76.0,note:'Nixtamalized corn flour for tortillas and tamales'},
+  {id:'mx_cumin',name:'Ground Cumin',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:6.0,kcal:375,fat:22.3,satFat:1.5,sugar:2.3,protein:17.8,carbs:44.2,note:'Core spice in Mexican savory seasoning blends'},
+  {id:'mx_chilipowder',name:'Chili Powder (blend)',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:7.0,kcal:282,fat:14.3,satFat:2.5,sugar:7.0,protein:12.0,carbs:50.0,note:'Blended seasoning — check label for cumin/garlic/oregano mix'},
+  {id:'mx_guajillo',name:'Dried Guajillo Chiles',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:12.0,kcal:283,fat:6.0,satFat:1.0,sugar:30.0,protein:11.0,carbs:57.0,note:'Mild, tangy dried chile for sauces and adobo'},
+  {id:'mx_lime',name:'Fresh Lime',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:2.5,kcal:30,fat:0.2,satFat:0,sugar:1.7,protein:0.7,carbs:10.9,note:'Acid finish across most Mexican dishes'},
+  {id:'mx_cilantro',name:'Fresh Cilantro',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:4.0,kcal:23,fat:0.5,satFat:0,sugar:0.9,protein:2.1,carbs:3.7,note:'Fresh herb finish, salsas and garnish'},
+  {id:'mx_quesofresco',name:'Queso Fresco',cat:'Mexican Cuisine',vegan:false,allergens:['dairy'],costKg:7.5,kcal:264,fat:20.0,satFat:13.0,sugar:2.5,protein:18.0,carbs:2.0,note:'Crumbly fresh cheese, does not melt, used as topping'},
+  {id:'mx_blackbeans',name:'Black Beans (cooked)',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:2.2,kcal:132,fat:0.5,satFat:0.1,sugar:0.3,protein:8.9,carbs:23.7,note:'Staple protein/side, refried or whole'},
+  {id:'mx_chipotle',name:'Chipotle in Adobo',cat:'Mexican Cuisine',vegan:true,allergens:[],costKg:5.0,kcal:130,fat:3.0,satFat:0.5,sugar:12.0,protein:4.0,carbs:22.0,note:'Smoky heat for marinades and sauces'},
+
+  // ---------- ARABIC CUISINE ----------
+  {id:'ar_zaatar',name:"Za'atar Blend",cat:'Arabic Cuisine',vegan:true,allergens:['sesame'],costKg:12.0,kcal:379,fat:20.0,satFat:3.0,sugar:2.0,protein:10.0,carbs:42.0,note:'Thyme, sumac, sesame, salt — bread topping and marinade'},
+  {id:'ar_sumac',name:'Ground Sumac',cat:'Arabic Cuisine',vegan:true,allergens:[],costKg:15.0,kcal:262,fat:6.0,satFat:0.5,sugar:3.0,protein:5.0,carbs:65.0,note:'Tart, lemony finishing spice'},
+  {id:'ar_tahini',name:'Tahini',cat:'Arabic Cuisine',vegan:true,allergens:['sesame'],costKg:9.0,kcal:595,fat:54.0,satFat:7.6,sugar:0.5,protein:17.0,carbs:21.0,note:'Sesame paste, base for hummus, tahini sauce, halva'},
+  {id:'ar_pommolasses',name:'Pomegranate Molasses',cat:'Arabic Cuisine',vegan:true,allergens:[],costKg:8.0,kcal:260,fat:0.2,satFat:0,sugar:55.0,protein:1.5,carbs:65.0,note:'Sweet-tart syrup for dressings, marinades, muhammara'},
+  {id:'ar_cardamom',name:'Ground Cardamom',cat:'Arabic Cuisine',vegan:true,allergens:[],costKg:30.0,kcal:311,fat:6.7,satFat:0.6,sugar:0,protein:10.8,carbs:68.0,note:'Coffee, desserts, rice dishes'},
+  {id:'ar_bulgur',name:'Bulgur Wheat',cat:'Arabic Cuisine',vegan:true,allergens:['gluten'],costKg:2.0,kcal:342,fat:1.3,satFat:0.2,sugar:0.4,protein:12.3,carbs:76.0,note:'Base grain for tabbouleh, kibbeh'},
+  {id:'ar_chickpeas',name:'Dried Chickpeas',cat:'Arabic Cuisine',vegan:true,allergens:[],costKg:2.0,kcal:364,fat:6.0,satFat:0.6,sugar:11.0,protein:19.0,carbs:61.0,note:'Hummus, falafel, stews'},
+  {id:'ar_labneh',name:'Labneh',cat:'Arabic Cuisine',vegan:false,allergens:['dairy'],costKg:5.0,kcal:150,fat:10.0,satFat:6.5,sugar:4.0,protein:8.0,carbs:5.0,note:'Strained yogurt, thicker than Greek yogurt'},
+
+  // ---------- AMERICAN CUISINE ----------
+  {id:'us_mustard',name:'Yellow Mustard',cat:'American Cuisine',vegan:true,allergens:['mustard'],costKg:3.0,kcal:66,fat:3.3,satFat:0.2,sugar:3.0,protein:4.4,carbs:5.4,note:'Condiment and glaze base'},
+  {id:'us_bbqsauce',name:'BBQ Sauce',cat:'American Cuisine',vegan:true,allergens:[],costKg:3.5,kcal:172,fat:0.6,satFat:0.1,sugar:33.0,protein:1.0,carbs:40.0,note:'Glaze/finish for grilled and smoked meats'},
+  {id:'us_worcestershire',name:'Worcestershire Sauce',cat:'American Cuisine',vegan:false,allergens:['fish'],costKg:4.5,kcal:78,fat:0,satFat:0,sugar:15.0,protein:0,carbs:19.5,note:'Umami depth in marinades, BBQ sauce, meatloaf'},
+  {id:'us_cheddar',name:'Cheddar Cheese',cat:'American Cuisine',vegan:false,allergens:['dairy'],costKg:8.5,kcal:403,fat:33.0,satFat:21.0,sugar:0.5,protein:25.0,carbs:1.3,note:'Standard melting cheese'},
+  {id:'us_cornmeal',name:'Yellow Cornmeal',cat:'American Cuisine',vegan:true,allergens:[],costKg:1.8,kcal:370,fat:3.9,satFat:0.5,sugar:0.6,protein:8.0,carbs:79.0,note:'Cornbread, breading, grits'},
+  {id:'us_smokedpaprika',name:'Smoked Paprika',cat:'American Cuisine',vegan:true,allergens:[],costKg:10.0,kcal:282,fat:13.0,satFat:2.0,sugar:10.0,protein:14.0,carbs:54.0,note:'BBQ rubs, chili, smoky depth without a smoker'},
+];
+
+const CATEGORY_ORDER = ['Flours','Fats & Oils','Sugars & Sweeteners','Eggs & Dairy','Fruit & Mash','Meat & Protein','Chinese Cuisine','Indian Cuisine','Mexican Cuisine','Arabic Cuisine','American Cuisine','Leavening','Salt & Misc','Preservatives','Emulsifiers','Colours','Packing Materials'];
+
+// Parent taxonomy: every category belongs to exactly one of these. "Hot Process" is
+// cuisine-specific savory cooking (Chinese needs Chinese ingredients, Indian needs Indian,
+// etc.) — "Cold Process" is baking/dessert assembly — "Universal" applies regardless of
+// cuisine or process. New categories should be added to CATEGORY_ORDER above AND assigned
+// here, or they fall back to "Other" in the grouped library view.
+const PARENT_GROUPS = [
+  {name:'Hot Process', icon:'🔥', categories:['Meat & Protein','Chinese Cuisine','Indian Cuisine','Mexican Cuisine','Arabic Cuisine','American Cuisine']},
+  {name:'Cold Process', icon:'❄️', categories:['Flours','Fats & Oils','Sugars & Sweeteners','Eggs & Dairy','Fruit & Mash','Leavening']},
+  {name:'Universal — applies to every cuisine', icon:'📦', categories:['Salt & Misc','Preservatives','Emulsifiers','Colours','Packing Materials']},
+];
+
+/* ================================================================
+   NUTRITION REFERENCE DATABASE
+   This is the "central database" the search engine below queries —
+   a wider reference set than the working ingredient library, standing
+   in for a real nutrition API/database. Values are per-100g estimates
+   from standard reference composition data.
+
+   In production, searchNutritionAI() below would call a live nutrition
+   API or an AI model with web search instead of (or in addition to)
+   this local table — the function signature and return shape are kept
+   identical either way, so swapping the implementation later doesn't
+   require touching any calling code. For this demo it runs fully
+   offline with a simulated search delay so the UX is testable without
+   a live connection.
+================================================================= */
+const NUTRITION_REFERENCE_DB = [
+  {name:'Almond Butter',aliases:['almond spread'],kcal:614,fat:56,satFat:5.3,sugar:4.4,protein:21,carbs:19,allergens:['tree nuts'],vegan:true},
+  {name:'Peanut Butter',aliases:[],kcal:588,fat:50,satFat:10,sugar:9,protein:25,carbs:20,allergens:['peanuts'],vegan:true},
+  {name:'Tahini',aliases:['sesame paste'],kcal:595,fat:54,satFat:7.6,sugar:0.5,protein:17,carbs:21,allergens:['sesame'],vegan:true},
+  {name:'Coconut Sugar',aliases:['palm sugar'],kcal:375,fat:0.5,satFat:0.4,sugar:75,protein:0.2,carbs:78,allergens:[],vegan:true},
+  {name:'Molasses',aliases:['blackstrap molasses'],kcal:290,fat:0.1,satFat:0,sugar:60,protein:0,carbs:75,allergens:[],vegan:true},
+  {name:'Agave Syrup',aliases:['agave nectar'],kcal:310,fat:0.2,satFat:0,sugar:68,protein:0.1,carbs:76,allergens:[],vegan:true},
+  {name:'Malt Syrup',aliases:['barley malt syrup'],kcal:318,fat:0.1,satFat:0,sugar:48,protein:3.9,carbs:76,allergens:['gluten'],vegan:true},
+  {name:'Rye Flour',aliases:[],kcal:349,fat:1.7,satFat:0.2,sugar:1.0,protein:8.8,carbs:75,allergens:['gluten'],vegan:true},
+  {name:'Spelt Flour',aliases:[],kcal:338,fat:2.4,satFat:0.4,sugar:6.8,protein:14.6,carbs:70,allergens:['gluten'],vegan:true},
+  {name:'Brown Rice Flour',aliases:[],kcal:363,fat:2.8,satFat:0.6,sugar:0.9,protein:7.2,carbs:76,allergens:[],vegan:true},
+  {name:'Tapioca Starch',aliases:['tapioca flour'],kcal:358,fat:0.02,satFat:0,sugar:3.4,protein:0.2,carbs:88,allergens:[],vegan:true},
+  {name:'Arrowroot Powder',aliases:['arrowroot starch'],kcal:357,fat:0.1,satFat:0,sugar:0,protein:0.3,carbs:88,allergens:[],vegan:true},
+  {name:'Potato Starch',aliases:[],kcal:357,fat:0.1,satFat:0,sugar:0,protein:0.1,carbs:83,allergens:[],vegan:true},
+  {name:'Agar Agar',aliases:['agar powder'],kcal:26,fat:0,satFat:0,sugar:0,protein:0.5,carbs:6.8,allergens:[],vegan:true},
+  {name:'Gelatin Sheets',aliases:['leaf gelatin'],kcal:335,fat:0.1,satFat:0,sugar:0,protein:85,carbs:0,allergens:[],vegan:false},
+  {name:'Cocoa Butter',aliases:[],kcal:884,fat:100,satFat:60,sugar:0,protein:0,carbs:0,allergens:[],vegan:true},
+  {name:'Cocoa Powder',aliases:['unsweetened cocoa'],kcal:228,fat:14,satFat:8.1,sugar:1.8,protein:19.6,carbs:58,allergens:[],vegan:true},
+  {name:'White Chocolate',aliases:[],kcal:539,fat:32,satFat:19,sugar:59,protein:5.9,carbs:59,allergens:['dairy'],vegan:false},
+  {name:'Milk Chocolate',aliases:[],kcal:535,fat:30,satFat:18,sugar:52,protein:7.7,carbs:59,allergens:['dairy'],vegan:false},
+  {name:'Cream Cheese',aliases:[],kcal:342,fat:34,satFat:19,sugar:3.2,protein:6.2,carbs:4.1,allergens:['dairy'],vegan:false},
+  {name:'Mascarpone',aliases:[],kcal:429,fat:44,satFat:29,sugar:3.0,protein:4.8,carbs:4.0,allergens:['dairy'],vegan:false},
+  {name:'Ricotta',aliases:[],kcal:174,fat:13,satFat:8.3,sugar:0.3,protein:11.3,carbs:3.0,allergens:['dairy'],vegan:false},
+  {name:'Sour Cream',aliases:[],kcal:198,fat:19.4,satFat:12.1,sugar:2.9,protein:2.4,carbs:4.6,allergens:['dairy'],vegan:false},
+  {name:'Evaporated Milk',aliases:[],kcal:134,fat:7.6,satFat:4.6,sugar:12.7,protein:6.8,carbs:10,allergens:['dairy'],vegan:false},
+  {name:'Powdered Milk',aliases:['dry milk','milk powder'],kcal:496,fat:26.7,satFat:16.7,sugar:38.4,protein:26.3,carbs:38.4,allergens:['dairy'],vegan:false},
+  {name:'Oat Milk',aliases:[],kcal:47,fat:1.5,satFat:0.2,sugar:4.1,protein:1.0,carbs:7.5,allergens:['gluten (cross-contact common)'],vegan:true},
+  {name:'Almond Milk',aliases:[],kcal:17,fat:1.5,satFat:0.1,sugar:0.2,protein:0.6,carbs:0.6,allergens:['tree nuts'],vegan:true},
+  {name:'Coconut Cream',aliases:[],kcal:330,fat:34,satFat:30,sugar:3.3,protein:3.6,carbs:6.7,allergens:[],vegan:true},
+  {name:'Dates',aliases:['medjool dates','date paste'],kcal:277,fat:0.2,satFat:0,sugar:66.5,protein:1.8,carbs:75,allergens:[],vegan:true},
+  {name:'Raisins',aliases:[],kcal:299,fat:0.5,satFat:0.1,sugar:59,protein:3.1,carbs:79,allergens:[],vegan:true},
+  {name:'Pecans',aliases:[],kcal:691,fat:72,satFat:6.2,sugar:4.0,protein:9.2,carbs:14,allergens:['tree nuts'],vegan:true},
+  {name:'Cashews',aliases:[],kcal:553,fat:44,satFat:7.8,sugar:5.9,protein:18,carbs:30,allergens:['tree nuts'],vegan:true},
+  {name:'Sunflower Seeds',aliases:[],kcal:584,fat:51,satFat:4.5,sugar:2.6,protein:21,carbs:20,allergens:[],vegan:true},
+  {name:'Chia Seeds',aliases:[],kcal:486,fat:31,satFat:3.3,sugar:0,protein:17,carbs:42,allergens:[],vegan:true},
+  {name:'Flaxseed',aliases:['ground flaxseed','flax meal'],kcal:534,fat:42,satFat:3.7,sugar:1.6,protein:18,carbs:29,allergens:[],vegan:true},
+  {name:'Psyllium Husk',aliases:[],kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,allergens:[],vegan:true},
+  {name:'Turmeric Powder',aliases:[],kcal:312,fat:3.3,satFat:1.8,sugar:3.2,protein:9.7,carbs:67,allergens:[],vegan:true},
+  {name:'Ginger Powder',aliases:['ground ginger'],kcal:335,fat:4.2,satFat:1.1,sugar:3.4,protein:9.0,carbs:71,allergens:[],vegan:true},
+  {name:'Nutmeg',aliases:['ground nutmeg'],kcal:525,fat:36,satFat:26,sugar:2.8,protein:5.8,carbs:49,allergens:[],vegan:true},
+  {name:'Cardamom',aliases:['ground cardamom'],kcal:311,fat:6.7,satFat:0.6,sugar:0,protein:10.8,carbs:68,allergens:[],vegan:true},
+  {name:'Cloves',aliases:['ground cloves'],kcal:274,fat:13,satFat:3.9,sugar:2.4,protein:6.0,carbs:65,allergens:[],vegan:true},
+  {name:'Allspice',aliases:[],kcal:263,fat:8.7,satFat:2.3,sugar:0,protein:6.1,carbs:72,allergens:[],vegan:true},
+  {name:'Orange Zest',aliases:[],kcal:97,fat:0.2,satFat:0,sugar:25,protein:1.5,carbs:25,allergens:[],vegan:true},
+  {name:'Lemon Zest',aliases:[],kcal:47,fat:0.3,satFat:0,sugar:2.5,protein:1.5,carbs:16,allergens:[],vegan:true},
+  {name:'Rosewater',aliases:[],kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,allergens:[],vegan:true},
+  {name:'Orange Blossom Water',aliases:[],kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0,allergens:[],vegan:true},
+  {name:'Espresso Powder',aliases:['instant espresso'],kcal:353,fat:0.5,satFat:0.1,sugar:0,protein:12.2,carbs:73,allergens:[],vegan:true},
+  {name:'Instant Coffee',aliases:[],kcal:353,fat:0.5,satFat:0.1,sugar:0,protein:12.2,carbs:73,allergens:[],vegan:true},
+  {name:'Malted Milk Powder',aliases:[],kcal:410,fat:6.5,satFat:3.8,sugar:38,protein:11,carbs:76,allergens:['dairy','gluten'],vegan:false},
+  {name:'Buttermilk Powder',aliases:[],kcal:387,fat:6.7,satFat:4.2,sugar:47,protein:33.5,carbs:49,allergens:['dairy'],vegan:false},
+  {name:'Corn Syrup',aliases:['light corn syrup'],kcal:286,fat:0,satFat:0,sugar:76,protein:0,carbs:77,allergens:[],vegan:true},
+  {name:'Brown Rice Syrup',aliases:[],kcal:316,fat:0,satFat:0,sugar:2,protein:0,carbs:79,allergens:[],vegan:true},
+];
+
+/* ================= NUTRITION SEARCH ENGINE — LIVE API =================
+   Calls Claude (with web search) directly for real nutrition data. Works
+   inside the Claude artifact environment with no API key required — the
+   platform authenticates the request. If the call fails for any reason
+   (offline, rate-limited, run outside an artifact context) it falls back
+   to the local reference database / category estimate below, so the
+   search bar always returns something rather than breaking.
+================================================================= */
+function estimateByCategory(query){
+  const q = query.toLowerCase();
+  const rules = [
+    {test:/flour/, profile:{kcal:360,fat:1.5,satFat:0.3,sugar:0.5,protein:10,carbs:75}, allergens:['gluten']},
+    {test:/oil|fat|butter(?!milk)|ghee|margarine/, profile:{kcal:800,fat:88,satFat:30,sugar:1,protein:1,carbs:2}, allergens:[]},
+    {test:/sugar|syrup|honey|nectar/, profile:{kcal:340,fat:0,satFat:0,sugar:75,protein:0.2,carbs:80}, allergens:[]},
+    {test:/milk|cream|yogurt|dairy|cheese/, profile:{kcal:150,fat:8,satFat:5,sugar:5,protein:5,carbs:6}, allergens:['dairy']},
+    {test:/nut|almond|walnut|hazelnut|pecan|cashew|pistachio/, profile:{kcal:600,fat:52,satFat:6,sugar:5,protein:18,carbs:20}, allergens:['tree nuts']},
+    {test:/fruit|berry|banana|apple|mango|orange|lemon|fig/, profile:{kcal:60,fat:0.3,satFat:0.1,sugar:12,protein:0.8,carbs:15}, allergens:[]},
+    {test:/spice|powder|extract|zest|essence/, profile:{kcal:250,fat:3,satFat:0.5,sugar:2,protein:6,carbs:60}, allergens:[]},
+    {test:/egg/, profile:{kcal:143,fat:9.5,satFat:3.1,sugar:0.4,protein:12.6,carbs:0.7}, allergens:['egg']},
+  ];
+  for(const rule of rules){ if(rule.test.test(q)) return {...rule.profile, allergens:rule.allergens}; }
+  return {kcal:300,fat:5,satFat:1,sugar:10,protein:8,carbs:55, allergens:[]}; // generic fallback
+}
+function searchNutritionLocal(query, reasonPrefix){
+  const q = query.trim().toLowerCase();
+  let match = NUTRITION_REFERENCE_DB.find(e=>e.name.toLowerCase()===q);
+  if(!match) match = NUTRITION_REFERENCE_DB.find(e=>e.aliases.some(a=>a.toLowerCase()===q));
+  if(!match) match = NUTRITION_REFERENCE_DB.find(e=>e.name.toLowerCase().includes(q)||q.includes(e.name.toLowerCase()));
+  if(!match) match = NUTRITION_REFERENCE_DB.find(e=>e.aliases.some(a=>a.toLowerCase().includes(q)||q.includes(a.toLowerCase())));
+  const prefix = reasonPrefix ? reasonPrefix+' — using local reference data instead. ' : '';
+  if(match){
+    return {name:match.name, kcal:match.kcal, fat:match.fat, satFat:match.satFat, sugar:match.sugar, protein:match.protein, carbs:match.carbs, allergens:match.allergens, vegan:match.vegan, source:'local_reference_database', confidence:'medium', note:`${prefix}Matched "${match.name}" in the local reference database.`};
+  }
+  const est = estimateByCategory(q);
+  return {name:query, ...est, vegan:true, source:'local_estimate', confidence:'low', note:`${prefix}No exact match found — this is a category-based estimate, not real data. Review before saving.`};
+}
+async function searchNutritionAI(query){
+  const q = query.trim();
+  if(!q) return null;
+  try{
+    const prompt = `Search the web for real nutritional data on this food/baking ingredient: "${q}".
+Return ONLY a single JSON object, no prose, no markdown code fences, matching exactly this shape:
+{"name":"proper display name","kcal":number,"fat":number,"satFat":number,"sugar":number,"protein":number,"carbs":number,"allergens":["lowercase strings, empty array if none"],"vegan":boolean}
+All nutrition values are per 100g, standard reference composition data. If you can't find an exact match, give your best-informed estimate but still return valid JSON in this exact shape — no other text.`;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:1000,
+        messages:[{role:"user", content:prompt}],
+        tools:[{type:"web_search_20250305", name:"web_search"}],
+      }),
+    });
+    if(!response.ok) throw new Error(`API returned ${response.status}`);
+    const data = await response.json();
+    const textBlocks = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text);
+    const raw = textBlocks.join("\n");
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error("Could not parse a data object from the response");
+    const parsed = JSON.parse(jsonMatch[0]);
+    return {
+      name: parsed.name||q, kcal:parsed.kcal||0, fat:parsed.fat||0, satFat:parsed.satFat||0,
+      sugar:parsed.sugar||0, protein:parsed.protein||0, carbs:parsed.carbs||0,
+      allergens: parsed.allergens||[], vegan: !!parsed.vegan,
+      source:'live_api', confidence:'high', note:`Live search via Claude + web search for "${q}".`,
+    };
+  } catch(err){
+    return searchNutritionLocal(q, `Live search failed (${err.message})`);
+  }
+}
+
+const TEMPLATES = {
+  banana_cake: { name:'Banana Cake', unitWeightG:90, items:[
+    {id:'fl_ap',g:250},{id:'sugar_white',g:180},{id:'sugar_brown_light',g:40},{id:'oil_sunflower',g:120},
+    {id:'egg_whole',g:150},{id:'banana_mashed',g:300},{id:'yogurt_plain',g:60},{id:'baking_powder',g:6},
+    {id:'baking_soda',g:4},{id:'salt',g:3},{id:'vanilla_extract',g:6},{id:'cinnamon',g:2},{id:'walnuts',g:60},
+  ]}
+};
+
+/* ================= STATE ================= */
+let recipe = [];
+const SESSION_TICKET_CODE = 'BK-'+String(Math.floor(1000+Math.random()*9000));
+let activeCatFilter = null;
+let costOverrides = {}; // id -> cost per KG (from bulk purchase entry)
+// Inventory: id -> {qty (grams for weight/piece items, count for unit/roll items), history:[{date,type,qty,note}]}.
+// Stock is added automatically whenever a bulk purchase is recorded on an ingredient — that's
+// the "ingredient added -> saved in inventory" link — and can be manually adjusted or deducted
+// when a batch is actually produced.
+let inventory = {};
+function ensureInventory(id){ if(!inventory[id]) inventory[id] = {qty:0, history:[]}; return inventory[id]; }
+function addInventoryStock(id, qty, note){
+  if(!qty || qty<=0) return;
+  const inv = ensureInventory(id);
+  inv.qty += qty;
+  inv.history.push({date:new Date().toISOString(), type:'received', qty, note});
+}
+function consumeInventoryStock(id, qty, note){
+  if(!qty || qty<=0) return;
+  const inv = ensureInventory(id);
+  inv.qty = Math.max(0, inv.qty-qty);
+  inv.history.push({date:new Date().toISOString(), type:'consumed', qty, note});
+}
+function getInventoryQty(id){ return inventory[id] ? inventory[id].qty : 0; }
+let activeTab = 'builder'; // builder | costing | testing
+let costingState = { targetBatchKg: 10, portionG: 100, lossPct: 8 };
+let projects = []; // [{id,name,versions:[{id,label,parentId,rationale,snapshot,status,score,scoreNotes,bakeTest,createdAt}]}]
+let projectCounter = 1;
+let openDotMenuId = null;
+
+function getItem(id){ return LIBRARY.find(i=>i.id===id); }
+// Raw cost/kg exactly as purchased (from bulk entry or the library default) — no wastage applied.
+function rawCostKg(item){ return costOverrides[item.id]!==undefined ? costOverrides[item.id] : item.costKg; }
+// Effective cost/kg of the USABLE portion, after wastage (peel, core, trim). If you pay for
+// 14kg of whole banana at 8 KWD (raw = 0.571/kg) and 40% is lost to peel, the edible flesh
+// you actually get is 14 × 0.60 = 8.4kg — so the real cost per kg of edible banana is
+// 8 ÷ 8.4 = 0.952/kg, not the raw 0.571/kg. Formula: raw ÷ (1 − wastage%).
+// Recipe quantities represent edible/usable weight, so this adjusted figure is what
+// feeds every cost calculation in the tool — the raw price stays visible separately.
+function effectiveCostKg(item){
+  const raw = rawCostKg(item);
+  const wastage = item.wastagePct||0;
+  if(wastage<=0) return raw;
+  const factor = 1-(Math.min(wastage,99)/100);
+  return factor>0 ? raw/factor : raw;
+}
+// Binds a recompute handler to both 'input' and 'change' — 'input' covers normal typing,
+// 'change' catches paste-then-tab-away, autofill, and number-spinner clicks that don't
+// always fire 'input' consistently across browsers. Without both, a value can look
+// updated in the field but silently fail to recompute and get saved stale.
+function bindRecompute(ids, fn){
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    el.addEventListener('input', fn);
+    el.addEventListener('change', fn);
+  });
+}
+function isPackagingItem(item){ return item.cat==='Packing Materials'; }
+// Cost per single unit (box, label, or one flow-wrapped pack) — used for items measured
+// by count, not weight. 'roll' items derive it from roll specs; 'unit' items store it directly.
+function effectiveCostPerUnit(item){
+  if(costOverrides[item.id]!==undefined) return costOverrides[item.id];
+  if(item.costUnit==='roll'){
+    const packagesPerRoll = item.wrapLengthCmPerUnit>0 ? (item.rollLengthM*100)/item.wrapLengthCmPerUnit : 0;
+    return packagesPerRoll>0 ? item.costPerRoll/packagesPerRoll : 0;
+  }
+  return item.costPerUnit||0;
+}
+// For weight-based-but-piece-bought items (eggs): price per piece, derived from cost/kg × avg piece weight.
+function effectivePricePerPiece(item){
+  if(item.costUnit!=='piece') return null;
+  return effectiveCostKg(item)*((item.pieceWeightG||0)/1000);
+}
+
+/* ================= TABS ================= */
+function renderTabbar(){
+  const bar = document.getElementById('tabbar'); bar.innerHTML='';
+  [['builder','Builder'],['costing','Costing Engine'],['inventory','Inventory'],['testing','Saved Recipes & Testing']].forEach(([key,label])=>{
+    const el = document.createElement('div');
+    el.className = 'tab'+(activeTab===key?' active':'');
+    el.textContent = label;
+    el.onclick = ()=>{
+      activeTab=key;
+      document.getElementById('builderView').style.display = key==='builder'?'block':'none';
+      document.getElementById('costingView').style.display = key==='costing'?'block':'none';
+      document.getElementById('inventoryView').style.display = key==='inventory'?'block':'none';
+      document.getElementById('testingView').style.display = key==='testing'?'block':'none';
+      renderAll();
+    };
+    bar.appendChild(el);
+  });
+}
+
+/* ================= LIBRARY PANEL ================= */
+function renderCatToggle(){
+  const wrap = document.getElementById('catToggle'); wrap.innerHTML='';
+  const allChip = document.createElement('div');
+  allChip.className = 'cat-chip'+(activeCatFilter===null?' active':'');
+  allChip.textContent = 'All';
+  allChip.onclick = ()=>{ activeCatFilter=null; renderLibrary(); };
+  wrap.appendChild(allChip);
+  CATEGORY_ORDER.forEach(c=>{
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip'+(activeCatFilter===c?' active':'');
+    chip.textContent = c;
+    chip.onclick = ()=>{ activeCatFilter=c; renderLibrary(); };
+    wrap.appendChild(chip);
+  });
+}
+function renderLibrary(){
+  renderCatToggle();
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const wrap = document.getElementById('libraryList'); wrap.innerHTML='';
+  let items = LIBRARY;
+  if(activeCatFilter) items = items.filter(i=>i.cat===activeCatFilter);
+  if(q) items = items.filter(i=> i.name.toLowerCase().includes(q) || (i.ecode&&i.ecode.toLowerCase().includes(q)) || i.cat.toLowerCase().includes(q));
+
+  if(!activeCatFilter && !q){
+    PARENT_GROUPS.forEach(group=>{
+      const groupCats = group.categories.filter(c=>CATEGORY_ORDER.includes(c) && LIBRARY.some(i=>i.cat===c));
+      if(groupCats.length===0) return;
+      const gh = document.createElement('div');
+      gh.className = 'process-group-header';
+      gh.textContent = `${group.icon} ${group.name}`;
+      wrap.appendChild(gh);
+      groupCats.forEach(cat=>{
+        const catItems = LIBRARY.filter(i=>i.cat===cat);
+        const h = document.createElement('h4');
+        h.innerHTML = `<span>${cat}</span><span class="add-inline-link" onclick="openAddCustomModal('${cat}')">+ Add ingredient</span>`;
+        wrap.appendChild(h);
+        catItems.forEach(i=>wrap.appendChild(renderLibItem(i)));
+      });
+    });
+  } else {
+    if(activeCatFilter){
+      const h = document.createElement('h4');
+      h.innerHTML = `<span>${activeCatFilter}</span><span class="add-inline-link" onclick="openAddCustomModal('${activeCatFilter}')">+ Add ingredient</span>`;
+      wrap.appendChild(h);
+    }
+    if(items.length===0){ wrap.innerHTML += '<div class="empty">No matches</div>'; return; }
+    items.forEach(i=>wrap.appendChild(renderLibItem(i)));
+  }
+}
+function renderLibItem(i){
+  const el = document.createElement('div'); el.className='lib-item';
+  const allergenTxt = i.allergens&&i.allergens.length?`<span class="allergen-flag">⚠ ${i.allergens.join(', ')}</span>`:'';
+  const ecodeTxt = i.ecode?`<span class="e-code">${i.ecode}</span> · `:'';
+  let costTxt;
+  if(isPackagingItem(i)){
+    const perUnit = effectiveCostPerUnit(i);
+    costTxt = `$${perUnit.toFixed(3)}/pack${costOverrides[i.id]!==undefined?' (custom)':''}${i.costUnit==='roll'?` (from roll: ${i.rollLengthM}m × ${i.rollWidthMM}mm, ${i.wrapLengthCmPerUnit}cm/pack)`:''}`;
+  } else if(i.costUnit==='piece'){
+    const perKg = effectiveCostKg(i);
+    const perPc = effectivePricePerPiece(i);
+    costTxt = `$${perKg.toFixed(2)}/kg <b>and</b> $${perPc.toFixed(3)}/pc (at ${i.pieceWeightG}g each)${costOverrides[i.id]!==undefined?' (custom)':''}`;
+  } else {
+    costTxt = `$${effectiveCostKg(i).toFixed(2)}/kg${i.wastagePct?` <span style="color:var(--warn);">(raw $${rawCostKg(i).toFixed(2)}, ${i.wastagePct}% loss)</span>`:''}${costOverrides[i.id]!==undefined?' (custom)':''}`;
+  }
+  el.innerHTML = `<div><div class="liname" onclick="addToRecipe('${i.id}')">${i.name}${i.custom?'<span class="custom-tag">CUSTOM</span>':''}</div><div class="limeta">${ecodeTxt}${isPackagingItem(i)?'':i.kcal+'kcal/100g · '}${costTxt}${allergenTxt?' · '+allergenTxt:''}</div></div>
+    <div class="btns"><div class="icon-btn cost" title="Edit ingredient (nutrition, allergens, cost)" onclick="openIngredientEditModal('${i.id}')">✎</div><div class="icon-btn" title="Add to recipe" onclick="addToRecipe('${i.id}')">+</div></div>`;
+  return el;
+}
+function addToRecipe(id){
+  const item = getItem(id);
+  if(!item) return;
+  const existing = recipe.find(r=>r.id===id);
+  const step = isPackagingItem(item) ? 1 : (item.ecode ? 1 : 50);
+  if(existing){ existing.g += step; }
+  else recipe.push({id, g: isPackagingItem(item) ? 1 : (item.ecode ? 2 : 0)});
+  renderAll();
+}
+function removeFromRecipe(id){ recipe = recipe.filter(r=>r.id!==id); renderAll(); }
+function parseWeightInput(val, currentG){
+  let s = String(val).trim().toLowerCase();
+  if(s.endsWith('kg')) return Math.max(0, parseFloat(s)*1000||0);
+  if(s.endsWith('g')) return Math.max(0, parseFloat(s)||0);
+  // Plain standard decimal, always denominated in kg — e.g. 0.25 = 250g, 6 = 6000g,
+  // 0.06 = 60g. No special digit-reading rules: this is just kg × 1000, exactly like
+  // any normal quantity field. Use an explicit "g" suffix (e.g. "60g") to type grams directly.
+  return Math.max(0, (parseFloat(s)||0)*1000);
+}
+function updateGrams(id, val){
+  const r = recipe.find(r=>r.id===id);
+  if(r) r.g = parseWeightInput(val, r.g);
+  renderAll();
+}
+
+/* ================= ADD CUSTOM INGREDIENT MODAL ================= */
+function openAddCustomModal(cat){
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Add custom ingredient — ${cat}</h3>
+    <div class="field"><label>Name</label><input type="text" id="cName" placeholder="e.g. Date Paste"></div>
+    <div class="ai-lookup-bar">
+      <input type="text" id="cSearchQuery" placeholder="🔍 Search nutrition database — type an ingredient name, e.g. 'tahini'">
+      <button class="btn primary" id="cSearchBtn" onclick="runNutritionSearch()">Search</button>
+    </div>
+    <div id="cSearchStatus" style="font-size:11.5px;color:var(--ink-soft);margin-bottom:14px;min-height:16px;"></div>
+    <div class="field-row">
+      <div class="field"><label>kcal /100g</label><input type="number" id="cKcal" value="0"></div>
+      <div class="field"><label>Fat g /100g</label><input type="number" id="cFat" value="0"></div>
+      <div class="field"><label>Sat. fat g /100g</label><input type="number" id="cSatFat" value="0"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Sugar g /100g</label><input type="number" id="cSugar" value="0"></div>
+      <div class="field"><label>Protein g /100g</label><input type="number" id="cProtein" value="0"></div>
+      <div class="field"><label>Carbs g /100g</label><input type="number" id="cCarbs" value="0"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Allergens (comma-separated)</label><input type="text" id="cAllergens" placeholder="e.g. gluten, dairy"></div>
+      <div class="field"><label>Vegan?</label><select id="cVegan"><option value="true">Yes</option><option value="false">No</option></select></div>
+    </div>
+    <div class="warn-box">Set cost from a bulk purchase — e.g. 50 kg for 5 KWD — and the per-kg / per-gram cost is calculated automatically.</div>
+    <div class="field-row">
+      <div class="field"><label>Bulk quantity</label><input type="number" id="cBulkQty" value="1" min="0.001" step="0.001"></div>
+      <div class="field"><label>Unit</label><select id="cBulkUnit"><option value="kg">kg</option><option value="g">g</option></select></div>
+      <div class="field"><label>Total cost</label><input type="number" id="cBulkCost" value="0" min="0" step="0.001"></div>
+      <div class="field"><label>Currency</label><input type="text" id="cCurrency" value="KWD"></div>
+    </div>
+    <div class="computed-cost-preview" id="cCostPreview">= $0.00 / kg</div>
+    <div class="btn-row" style="display:flex;gap:8px;margin-top:10px;"><button class="btn primary" onclick="confirmAddCustom('${cat}')">Add to library</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+  `;
+  bindRecompute(['cBulkQty','cBulkUnit','cBulkCost','cCurrency'], updateCustomCostPreview);
+  updateCustomCostPreview();
+  document.getElementById('cName').addEventListener('input', ()=>{
+    document.getElementById('cSearchQuery').value = document.getElementById('cName').value;
+  });
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+async function runNutritionSearch(){
+  const query = document.getElementById('cSearchQuery').value.trim();
+  if(!query) return;
+  const statusEl = document.getElementById('cSearchStatus');
+  const btn = document.getElementById('cSearchBtn');
+  btn.disabled = true;
+  statusEl.style.color = 'var(--ink-soft)';
+  statusEl.textContent = `Searching nutrition database for "${query}"…`;
+  const result = await searchNutritionAI(query);
+  btn.disabled = false;
+  if(!result){ statusEl.textContent = ''; return; }
+  document.getElementById('cKcal').value = result.kcal;
+  document.getElementById('cFat').value = result.fat;
+  document.getElementById('cSatFat').value = result.satFat;
+  document.getElementById('cSugar').value = result.sugar;
+  document.getElementById('cProtein').value = result.protein;
+  document.getElementById('cCarbs').value = result.carbs;
+  document.getElementById('cAllergens').value = (result.allergens||[]).join(', ');
+  document.getElementById('cVegan').value = String(!!result.vegan);
+  if(!document.getElementById('cName').value.trim()) document.getElementById('cName').value = result.name;
+  applySearchStatusStyle(statusEl, result);
+}
+function applySearchStatusStyle(statusEl, result){
+  if(result.source==='live_api'){
+    statusEl.style.color = 'var(--mint)';
+    statusEl.innerHTML = `✓ ${result.note}`;
+  } else if(result.source==='local_reference_database'){
+    statusEl.style.color = 'var(--frost)';
+    statusEl.innerHTML = `ⓘ ${result.note}`;
+  } else {
+    statusEl.style.color = 'var(--apricot)';
+    statusEl.innerHTML = `⚠ ${result.note} Review the values below before saving.`;
+  }
+}
+function updateCustomCostPreview(){
+  const qty = parseFloat(document.getElementById('cBulkQty').value)||0;
+  const unit = document.getElementById('cBulkUnit').value;
+  const cost = parseFloat(document.getElementById('cBulkCost').value)||0;
+  const currency = document.getElementById('cCurrency').value||'KWD';
+  const qtyKg = unit==='kg'?qty:qty/1000;
+  const perKg = qtyKg>0 ? cost/qtyKg : 0;
+  document.getElementById('cCostPreview').textContent = `= ${perKg.toFixed(3)} ${currency} / kg  (${(perKg/1000).toFixed(5)} ${currency} / g)`;
+}
+function confirmAddCustom(cat){
+  const name = document.getElementById('cName').value.trim();
+  if(!name){ return; }
+  const qty = parseFloat(document.getElementById('cBulkQty').value)||1;
+  const unit = document.getElementById('cBulkUnit').value;
+  const cost = parseFloat(document.getElementById('cBulkCost').value)||0;
+  const qtyKg = unit==='kg'?qty:qty/1000;
+  const perKg = qtyKg>0 ? cost/qtyKg : 0;
+  const id = 'custom_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Math.floor(Math.random()*999);
+  const allergens = document.getElementById('cAllergens').value.split(',').map(s=>s.trim()).filter(Boolean);
+  LIBRARY.push({
+    id, name, cat, custom:true,
+    vegan: document.getElementById('cVegan').value==='true', allergens,
+    costKg: perKg,
+    kcal: parseFloat(document.getElementById('cKcal').value)||0,
+    fat: parseFloat(document.getElementById('cFat').value)||0,
+    satFat: parseFloat(document.getElementById('cSatFat').value)||0,
+    sugar: parseFloat(document.getElementById('cSugar').value)||0,
+    protein: parseFloat(document.getElementById('cProtein').value)||0,
+    carbs: parseFloat(document.getElementById('cCarbs').value)||0,
+    note: 'Custom ingredient — manually entered',
+  });
+  const qtyG = qtyKg*1000;
+  addInventoryStock(id, qtyG, `New ingredient added: ${qty}${unit} for ${cost} ${document.getElementById('cCurrency').value||'KWD'}`);
+  closeModal(); addToRecipe(id); renderAll();
+}
+
+/* ================= BULK COST MODAL (existing items) ================= */
+function openIngredientEditModal(id){
+  const item = getItem(id); if(!item) return;
+  const body = document.getElementById('modalBody');
+  const currentCost = rawCostKg(item);
+  body.innerHTML = `
+    <h3>Edit ingredient</h3>
+    <div class="field"><label>Name</label><input type="text" id="eiName" value="${item.name}" ${item.custom?'':'disabled'}></div>
+    ${item.custom?'':'<p style="font-size:11px;color:var(--ink-soft);margin-top:-8px;">Built-in library item — name is fixed, but nutrition, allergens and cost below are fully editable and will update everywhere this ingredient is used.</p>'}
+    <div class="ai-lookup-bar">
+      <input type="text" id="eiSearchQuery" placeholder="🔍 Re-search nutrition database" value="${item.name}">
+      <button class="btn primary" id="eiSearchBtn" onclick="runNutritionSearchEdit()">Search</button>
+    </div>
+    <div id="eiSearchStatus" style="font-size:11.5px;color:var(--ink-soft);margin-bottom:14px;min-height:16px;"></div>
+    <div class="field-row">
+      <div class="field"><label>kcal /100g</label><input type="number" id="eiKcal" value="${item.kcal}"></div>
+      <div class="field"><label>Fat g /100g</label><input type="number" id="eiFat" value="${item.fat}"></div>
+      <div class="field"><label>Sat. fat g /100g</label><input type="number" id="eiSatFat" value="${item.satFat}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Sugar g /100g</label><input type="number" id="eiSugar" value="${item.sugar}"></div>
+      <div class="field"><label>Protein g /100g</label><input type="number" id="eiProtein" value="${item.protein}"></div>
+      <div class="field"><label>Carbs g /100g</label><input type="number" id="eiCarbs" value="${item.carbs}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Allergens (comma-separated)</label><input type="text" id="eiAllergens" value="${(item.allergens||[]).join(', ')}"></div>
+      <div class="field"><label>Vegan?</label><select id="eiVegan"><option value="true" ${item.vegan?'selected':''}>Yes</option><option value="false" ${!item.vegan?'selected':''}>No</option></select></div>
+    </div>
+
+    ${item.costUnit==='unit' || item.costUnit==='roll' ? '' : `
+    <div class="warn-box">Cost — current (as purchased, before wastage): <b>${currentCost.toFixed(3)} /kg</b>. Edit the field directly, or use the reference below to fill it in — either way this box always shows the actual current price, not a stale default.</div>
+    <div class="field"><label>Cost per kg (raw, as purchased)</label><input type="number" id="eiCostKg" value="${currentCost.toFixed(3)}" min="0" step="0.001"></div>
+    `}
+    ${(item.costUnit==='piece' || item.costUnit==='unit' || item.costUnit==='roll') ? '' : `
+    <div class="field"><label>Wastage / trim loss % (peel, core, rind — inedible portion)</label><input type="number" id="eiWastage" value="${item.wastagePct||0}" min="0" max="95" step="1"></div>
+    <div class="computed-cost-preview" id="eiWastagePreview"></div>
+    <p style="font-size:10.5px;color:var(--ink-soft);margin:6px 0 12px;">e.g. whole bananas at 40% peel loss: buying 14kg for 8 KWD (raw 0.571/kg) only yields 8.4kg of edible flesh, so the real cost per kg actually used in a recipe is 8 ÷ 8.4 = 0.952/kg. This adjusted figure — not the raw price — is what every recipe cost calculation uses.</p>
+    `}
+    ${item.costUnit==='piece' ? `
+    <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">Piece-based bulk reference — e.g. 360 eggs for 15 KWD, ~50g each. Saved with this ingredient so you can see what it was based on next time.</p>
+    <div class="field-row">
+      <div class="field"><label>Number of pieces</label><input type="number" id="eiPieces" value="${item.bulkPieces!==undefined?item.bulkPieces:360}" min="1" step="1"></div>
+      <div class="field"><label>Avg. weight per piece (g)</label><input type="number" id="eiPieceWeight" value="${item.pieceWeightG||50}" min="1" step="1"></div>
+      <div class="field"><label>Total cost paid</label><input type="number" id="eiBulkCost" value="${item.bulkCost!==undefined?item.bulkCost:15}" min="0" step="0.001"></div>
+      <div class="field"><label>Currency</label><input type="text" id="eiCurrency" value="${item.bulkCurrency||'KWD'}"></div>
+    </div>
+    <div class="computed-cost-preview" id="eiPiecePreview"></div>
+    <p style="font-size:10.5px;color:var(--ink-soft);margin:6px 0 12px;">Only whole eggs are priced this way — egg whites/yolks come in specific weights and stay cost-per-kg only.</p>
+    ` : item.costUnit==='unit' ? `
+    <div class="warn-box">Cost — current: <b>${effectiveCostPerUnit(item).toFixed(3)} /unit</b>. This is a simple piece good (box, label, bag) — priced directly per unit, no weight involved.</div>
+    <div class="field"><label>Cost per unit</label><input type="number" id="eiCostUnit" value="${effectiveCostPerUnit(item).toFixed(3)}" min="0" step="0.001"></div>
+    <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">Bulk reference — e.g. 1000 units for 45 KWD. Saved so you can see what it was based on next time.</p>
+    <div class="field-row">
+      <div class="field"><label>Units purchased</label><input type="number" id="eiUnitQty" value="${item.bulkUnitQty!==undefined?item.bulkUnitQty:1000}" min="1" step="1"></div>
+      <div class="field"><label>Total cost paid</label><input type="number" id="eiUnitCost" value="${item.bulkCost!==undefined?item.bulkCost:(effectiveCostPerUnit(item)*1000).toFixed(3)}" min="0" step="0.001"></div>
+      <div class="field"><label>Currency</label><input type="text" id="eiCurrency" value="${item.bulkCurrency||'KWD'}"></div>
+    </div>
+    <p style="font-size:10.5px;color:var(--ink-soft);margin:-6px 0 12px;">Changing these recalculates cost/unit above automatically.</p>
+    ` : item.costUnit==='roll' ? `
+    <div class="warn-box">Cost — current: <b>${effectiveCostPerUnit(item).toFixed(3)} /pack</b>, derived from the roll specs below. This is the standard way to cost flow-wrap film: roll length ÷ wrap length used per pack = packages per roll.</div>
+    <div class="field-row">
+      <div class="field"><label>Roll length (m)</label><input type="number" id="eiRollLength" value="${item.rollLengthM}" min="1" step="1"></div>
+      <div class="field"><label>Roll width (mm)</label><input type="number" id="eiRollWidth" value="${item.rollWidthMM}" min="1" step="1"></div>
+      <div class="field"><label>Film weight (GSM, g/m²)</label><input type="number" id="eiGsm" value="${item.gsm}" min="1" step="1"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Cost per roll</label><input type="number" id="eiCostPerRoll" value="${item.costPerRoll}" min="0" step="0.01"></div>
+      <div class="field"><label>Currency</label><input type="text" id="eiCurrency" value="${item.bulkCurrency||'KWD'}"></div>
+      <div class="field"><label>Wrap length per pack (cm)</label><input type="number" id="eiWrapLen" value="${item.wrapLengthCmPerUnit}" min="1" step="0.5"></div>
+    </div>
+    <div class="computed-cost-preview" id="eiRollPreview"></div>
+    <p style="font-size:10.5px;color:var(--ink-soft);margin:6px 0 12px;">Roll weight ≈ length × width × GSM ÷ 1,000,000 — useful if your supplier prices by weight instead of by roll; the packages-per-roll math only needs length and wrap-length-per-pack.</p>
+    ` : `
+    <p style="font-size:11px;color:var(--ink-soft);margin:0 0 6px;">Bulk purchase reference — e.g. 50 kg for 5 KWD. Saved with this ingredient so you can see what it was based on next time.</p>
+    <div class="field-row">
+      <div class="field"><label>Bulk quantity</label><input type="number" id="eiBulkQty" value="${item.bulkQty!==undefined?item.bulkQty:50}" min="0.001" step="0.001"></div>
+      <div class="field"><label>Unit</label><select id="eiBulkUnit"><option value="kg" ${(!item.bulkUnit||item.bulkUnit==='kg')?'selected':''}>kg</option><option value="g" ${item.bulkUnit==='g'?'selected':''}>g</option></select></div>
+      <div class="field"><label>Total cost paid</label><input type="number" id="eiBulkCost" value="${item.bulkCost!==undefined?item.bulkCost:(currentCost*50).toFixed(3)}" min="0" step="0.001"></div>
+      <div class="field"><label>Currency</label><input type="text" id="eiCurrency" value="${item.bulkCurrency||'KWD'}"></div>
+    </div>
+    <p style="font-size:10.5px;color:var(--ink-soft);margin:-6px 0 12px;">Changing these recalculates the cost/kg field above automatically.</p>
+    `}
+    <div id="modalErr" class="err-text"></div>
+    <div class="tc-row" style="border:1px solid var(--line);padding:8px 10px;margin-bottom:10px;"><span class="k">Current stock on hand</span><span class="v">${formatWeight ? (item.costUnit==='piece'||item.costUnit==='unit'||item.costUnit==='roll' ? getInventoryQty(id)+' pcs' : formatWeight(getInventoryQty(id))) : getInventoryQty(id)}</span></div>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn primary" onclick="confirmIngredientEdit('${id}', false)">Save changes</button>
+      <button class="btn primary" style="background:var(--mint);border-color:var(--mint);" onclick="confirmIngredientEdit('${id}', true)">📦 Save &amp; log stock received</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  `;
+  if(item.costUnit==='piece'){
+    const recompute = ()=>{
+      const pieces = parseFloat(document.getElementById('eiPieces').value)||0;
+      const pieceW = parseFloat(document.getElementById('eiPieceWeight').value)||0;
+      const cost = parseFloat(document.getElementById('eiBulkCost').value)||0;
+      const totalKg = (pieces*pieceW)/1000;
+      const perKg = totalKg>0 ? cost/totalKg : 0;
+      const perPc = perKg*(pieceW/1000);
+      document.getElementById('eiCostKg').value = perKg.toFixed(3);
+      document.getElementById('eiPiecePreview').innerHTML = `= <b>${perKg.toFixed(3)} /kg</b> &nbsp;and&nbsp; <b>${perPc.toFixed(3)} /piece</b>`;
+    };
+    bindRecompute(['eiPieces','eiPieceWeight','eiBulkCost'], recompute);
+    recompute();
+  } else if(item.costUnit==='unit'){
+    bindRecompute(['eiUnitQty','eiUnitCost'], ()=>{
+      const qty = parseFloat(document.getElementById('eiUnitQty').value)||0;
+      const cost = parseFloat(document.getElementById('eiUnitCost').value)||0;
+      document.getElementById('eiCostUnit').value = (qty>0 ? cost/qty : 0).toFixed(3);
+    });
+  } else if(item.costUnit==='roll'){
+    const recomputeRoll = ()=>{
+      const lenM = parseFloat(document.getElementById('eiRollLength').value)||0;
+      const wrapCm = parseFloat(document.getElementById('eiWrapLen').value)||0;
+      const costRoll = parseFloat(document.getElementById('eiCostPerRoll').value)||0;
+      const widthMM = parseFloat(document.getElementById('eiRollWidth').value)||0;
+      const gsm = parseFloat(document.getElementById('eiGsm').value)||0;
+      const packagesPerRoll = wrapCm>0 ? (lenM*100)/wrapCm : 0;
+      const perPack = packagesPerRoll>0 ? costRoll/packagesPerRoll : 0;
+      const rollWeightKg = (lenM*(widthMM/1000)*gsm)/1000;
+      document.getElementById('eiRollPreview').innerHTML = `= <b>${Math.floor(packagesPerRoll)} packs/roll</b> → <b>${perPack.toFixed(4)} /pack</b> &nbsp;·&nbsp; est. roll weight ${rollWeightKg.toFixed(1)}kg`;
+    };
+    bindRecompute(['eiRollLength','eiRollWidth','eiGsm','eiCostPerRoll','eiWrapLen'], recomputeRoll);
+    recomputeRoll();
+  } else {
+    bindRecompute(['eiBulkQty','eiBulkUnit','eiBulkCost'], ()=>{
+      const qty = parseFloat(document.getElementById('eiBulkQty').value)||0;
+      const unit = document.getElementById('eiBulkUnit').value;
+      const cost = parseFloat(document.getElementById('eiBulkCost').value)||0;
+      const qtyKg = unit==='kg'?qty:qty/1000;
+      document.getElementById('eiCostKg').value = (qtyKg>0 ? cost/qtyKg : 0).toFixed(3);
+      updateWastagePreview();
+    });
+  }
+  if(document.getElementById('eiWastage')){
+    bindRecompute(['eiCostKg','eiWastage'], updateWastagePreview);
+    updateWastagePreview();
+  }
+  function updateWastagePreview(){
+    const el = document.getElementById('eiWastagePreview'); if(!el) return;
+    const raw = parseFloat(document.getElementById('eiCostKg').value)||0;
+    const wastage = parseFloat(document.getElementById('eiWastage').value)||0;
+    const factor = 1-(Math.min(wastage,99)/100);
+    const effective = factor>0 ? raw/factor : raw;
+    el.innerHTML = wastage>0
+      ? `= <b>${effective.toFixed(3)} /kg effective</b> for recipe costing (raw ${raw.toFixed(3)}/kg ÷ ${(factor*100).toFixed(0)}% usable)`
+      : `No wastage set — effective cost = raw cost (${raw.toFixed(3)} /kg)`;
+  }
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+async function runNutritionSearchEdit(){
+  const query = document.getElementById('eiSearchQuery').value.trim();
+  if(!query) return;
+  const statusEl = document.getElementById('eiSearchStatus');
+  const btn = document.getElementById('eiSearchBtn');
+  btn.disabled = true;
+  statusEl.style.color = 'var(--ink-soft)';
+  statusEl.textContent = `Searching nutrition database for "${query}"…`;
+  const result = await searchNutritionAI(query);
+  btn.disabled = false;
+  if(!result){ statusEl.textContent = ''; return; }
+  document.getElementById('eiKcal').value = result.kcal;
+  document.getElementById('eiFat').value = result.fat;
+  document.getElementById('eiSatFat').value = result.satFat;
+  document.getElementById('eiSugar').value = result.sugar;
+  document.getElementById('eiProtein').value = result.protein;
+  document.getElementById('eiCarbs').value = result.carbs;
+  document.getElementById('eiAllergens').value = (result.allergens||[]).join(', ');
+  document.getElementById('eiVegan').value = String(!!result.vegan);
+  applySearchStatusStyle(statusEl, result);
+}
+function confirmIngredientEdit(id, receiveStock){
+  const item = getItem(id); if(!item) return;
+  if(item.custom) item.name = document.getElementById('eiName').value.trim()||item.name;
+  item.kcal = parseFloat(document.getElementById('eiKcal').value)||0;
+  item.fat = parseFloat(document.getElementById('eiFat').value)||0;
+  item.satFat = parseFloat(document.getElementById('eiSatFat').value)||0;
+  item.sugar = parseFloat(document.getElementById('eiSugar').value)||0;
+  item.protein = parseFloat(document.getElementById('eiProtein').value)||0;
+  item.carbs = parseFloat(document.getElementById('eiCarbs').value)||0;
+  item.vegan = document.getElementById('eiVegan').value==='true';
+  item.allergens = document.getElementById('eiAllergens').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(item.costUnit==='piece'){
+    costOverrides[id] = parseFloat(document.getElementById('eiCostKg').value)||0;
+    item.bulkPieces = parseFloat(document.getElementById('eiPieces').value)||0;
+    item.pieceWeightG = parseFloat(document.getElementById('eiPieceWeight').value)||item.pieceWeightG;
+    item.bulkCost = parseFloat(document.getElementById('eiBulkCost').value)||0;
+    item.bulkCurrency = document.getElementById('eiCurrency').value||'KWD';
+  } else if(item.costUnit==='unit'){
+    costOverrides[id] = parseFloat(document.getElementById('eiCostUnit').value)||0;
+    item.bulkUnitQty = parseFloat(document.getElementById('eiUnitQty').value)||0;
+    item.bulkCost = parseFloat(document.getElementById('eiUnitCost').value)||0;
+    item.bulkCurrency = document.getElementById('eiCurrency').value||'KWD';
+  } else if(item.costUnit==='roll'){
+    item.rollLengthM = parseFloat(document.getElementById('eiRollLength').value)||item.rollLengthM;
+    item.rollWidthMM = parseFloat(document.getElementById('eiRollWidth').value)||item.rollWidthMM;
+    item.gsm = parseFloat(document.getElementById('eiGsm').value)||item.gsm;
+    item.costPerRoll = parseFloat(document.getElementById('eiCostPerRoll').value)||item.costPerRoll;
+    item.wrapLengthCmPerUnit = parseFloat(document.getElementById('eiWrapLen').value)||item.wrapLengthCmPerUnit;
+    item.bulkCurrency = document.getElementById('eiCurrency').value||'KWD';
+    delete costOverrides[id]; // always re-derive from roll specs unless a manual override is set elsewhere
+  } else {
+    costOverrides[id] = parseFloat(document.getElementById('eiCostKg').value)||0;
+    item.bulkQty = parseFloat(document.getElementById('eiBulkQty').value)||0;
+    item.bulkUnit = document.getElementById('eiBulkUnit').value;
+    item.bulkCost = parseFloat(document.getElementById('eiBulkCost').value)||0;
+    item.bulkCurrency = document.getElementById('eiCurrency').value||'KWD';
+    if(document.getElementById('eiWastage')) item.wastagePct = parseFloat(document.getElementById('eiWastage').value)||0;
+  }
+  if(receiveStock){
+    let qty=0, note='';
+    if(item.costUnit==='piece'){ qty=item.bulkPieces; note=`Bulk purchase: ${item.bulkPieces} pcs for ${item.bulkCost} ${item.bulkCurrency}`; }
+    else if(item.costUnit==='unit'){ qty=item.bulkUnitQty; note=`Bulk purchase: ${item.bulkUnitQty} units for ${item.bulkCost} ${item.bulkCurrency}`; }
+    else if(item.costUnit==='roll'){ const perRoll = item.wrapLengthCmPerUnit>0 ? (item.rollLengthM*100)/item.wrapLengthCmPerUnit : 0; qty=Math.floor(perRoll); note=`1 roll purchased (~${Math.floor(perRoll)} packs) for ${item.costPerRoll} ${item.bulkCurrency}`; }
+    else { const qtyKg = item.bulkUnit==='kg'?item.bulkQty:item.bulkQty/1000; qty=qtyKg*1000; note=`Bulk purchase: ${item.bulkQty}${item.bulkUnit} for ${item.bulkCost} ${item.bulkCurrency}`; }
+    addInventoryStock(id, qty, note);
+  }
+  closeModal(); renderAll();
+}
+function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open'); }
+
+/* ================= VIEW RECIPE ================= */
+// Auto-formats a gram amount: under 1000g shown in grams, 1000g and over shown in kg
+// (with the exact gram figure alongside for precision) — e.g. 50 -> "50 g", 1200 -> "1.20 kg (1200 g)".
+function formatWeight(g){
+  if(g>=1000) return `${(g/1000).toFixed(2)} kg <span style="color:var(--ink-soft);font-weight:400;">(${g.toFixed(0)} g)</span>`;
+  return `${Number.isInteger(g)?g:g.toFixed(1)} g`;
+}
+function openViewRecipeModal(recipeNameArg, itemsArg){
+  const body = document.getElementById('modalBody');
+  const recipeName = recipeNameArg!==undefined ? recipeNameArg : document.getElementById('recipeName').value;
+  const items = itemsArg!==undefined ? itemsArg : recipe;
+  if(items.length===0){
+    body.innerHTML = `<h3>View recipe</h3><p style="color:var(--ink-soft);font-size:12px;">No ingredients in the recipe yet.</p><div class="btn-row"><button class="btn ghost" onclick="closeModal()">Close</button></div>`;
+    document.getElementById('modalBackdrop').classList.add('open');
+    return;
+  }
+  let rows = '';
+  let grandTotal = 0;
+  CATEGORY_ORDER.forEach(cat=>{
+    const catItems = items.filter(r=>getItem(r.id) && getItem(r.id).cat===cat);
+    if(catItems.length===0) return;
+    rows += `<tr><td colspan="5" style="background:var(--chip);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);padding:5px 8px;">${cat}</td></tr>`;
+    catItems.forEach(r=>{
+      const item = getItem(r.id);
+      const packaging = isPackagingItem(item);
+      let lineCost, priceCell;
+      if(packaging){
+        lineCost = effectiveCostPerUnit(item)*r.g;
+        priceCell = `${effectiveCostPerUnit(item).toFixed(3)} /pack`;
+      } else {
+        const raw = rawCostKg(item);
+        const eff = effectiveCostKg(item);
+        lineCost = (eff/1000)*r.g;
+        priceCell = item.wastagePct
+          ? `<b>${eff.toFixed(3)}</b> /kg eff. <span style="color:var(--ink-soft);font-size:10px;">(raw ${raw.toFixed(3)}, ${item.wastagePct}% loss)</span>`
+          : `${eff.toFixed(3)} /kg`;
+      }
+      grandTotal += lineCost;
+      rows += `<tr>
+        <td>${item.name}</td>
+        <td>${packaging ? r.g+' pcs' : formatWeight(r.g)}</td>
+        <td style="font-size:11.5px;">${priceCell}</td>
+        <td style="text-align:right;font-family:'IBM Plex Mono',monospace;">${lineCost.toFixed(3)}</td>
+      </tr>`;
+    });
+  });
+  body.innerHTML = `
+    <h3>${recipeName} — recipe view</h3>
+    <p style="font-size:11.5px;color:var(--ink-soft);margin-top:-8px;">Weight shown auto-formatted (grams under 1kg, kg and over 1000g). Price/kg shows the effective, wastage-adjusted cost where applicable — the figure actually used for costing — alongside the raw purchase price.</p>
+    <table class="recipe-table" style="margin-bottom:12px;">
+      <tr><th>Ingredient</th><th>Actual quantity used</th><th>Price</th><th style="text-align:right;">Line cost</th></tr>
+      ${rows}
+      <tr><td colspan="3" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:700;font-family:'IBM Plex Mono',monospace;">${grandTotal.toFixed(3)}</td></tr>
+    </table>
+    <div class="btn-row"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+/* ================= EXPORT ================= */
+// Every function here only READS state (recipe, projects) and triggers a file download.
+// Nothing is cleared, reset, or mutated — saved recipes and the current builder stay exactly as they are.
+function downloadBlob(content, mime, filename){
+  const blob = new Blob([content], {type:mime});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+function safeFileName(name){ return (name||'recipe').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+function openExportModal(){
+  const body = document.getElementById('modalBody');
+  const recipeName = document.getElementById('recipeName') ? document.getElementById('recipeName').value : 'Untitled Recipe';
+  const customCount = LIBRARY.filter(i=>i.custom).length;
+  const overrideCount = Object.keys(costOverrides).length;
+  body.innerHTML = `
+    <h3>Export</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">Exporting never changes or clears anything — your current recipe and all saved versions stay exactly as they are.</p>
+    <div class="field" style="margin-bottom:6px;"><label>Current recipe — "${recipeName}"</label></div>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+      <button class="btn primary" onclick="exportCurrentRecipeJSON()">Download JSON</button>
+      <button class="btn ghost" onclick="exportCurrentRecipeCSV()">Download CSV</button>
+      <button class="btn ghost" onclick="exportCurrentRecipeText()">Download spec sheet (.txt)</button>
+    </div>
+    <div class="field" style="margin-bottom:6px;"><label>All saved recipes &amp; versions (${projects.length} recipe${projects.length!==1?'s':''}, ${projects.reduce((s,p)=>s+p.versions.length,0)} version${projects.reduce((s,p)=>s+p.versions.length,0)!==1?'s':''})</label></div>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+      <button class="btn primary" ${projects.length===0?'disabled':''} onclick="exportAllSavedJSON()">Download all (JSON)</button>
+      <button class="btn ghost" ${projects.length===0?'disabled':''} onclick="exportAllSavedCSV()">Download all versions (CSV)</button>
+    </div>
+
+    <div class="warn-box" style="margin-top:4px;">This tool has no server or browser storage — closing the tab loses everything. The two backups below are how you carry pricing and recipes between sessions: download one, keep the file, re-import it next time to pick up exactly where you left off.</div>
+
+    <div class="field" style="margin-bottom:6px;"><label>Master pricing database (${LIBRARY.length} ingredients — ${customCount} custom, ${overrideCount} with an edited price)</label></div>
+    <p style="font-size:11px;color:var(--ink-soft);margin:0 0 8px;">Every ingredient's current cost, wastage %, nutrition, and bulk-purchase reference — independent of any recipe. Restore this first in a new session to get all your real prices back before building anything.</p>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;">
+      <button class="btn primary" onclick="exportMasterPricingJSON()">Download pricing database</button>
+      <input type="file" id="importPricingFile" accept=".json" style="display:none" onchange="handleImportPricingFile(event)">
+      <button class="btn ghost" onclick="document.getElementById('importPricingFile').click()">Import pricing database</button>
+      <span id="pricingImportResult" style="font-size:11px;color:var(--mint);"></span>
+    </div>
+
+    <div class="field" style="margin-bottom:6px;"><label>Full session backup</label></div>
+    <p style="font-size:11px;color:var(--ink-soft);margin:0 0 8px;">Everything at once — the pricing database above, every saved recipe and version, and whatever's currently in the Builder. One file, one restore.</p>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn primary" onclick="exportFullBackup()">Download full backup</button>
+      <input type="file" id="importBackupFile" accept=".json" style="display:none" onchange="handleImportBackupFile(event)">
+      <button class="btn ghost" onclick="document.getElementById('importBackupFile').click()">Import full backup</button>
+      <span id="backupImportResult" style="font-size:11px;color:var(--mint);"></span>
+    </div>
+
+    ${projects.length===0?'<p style="font-size:11px;color:var(--ink-soft);margin-top:14px;">No saved versions yet — save one from the Builder tab first.</p>':''}
+    <div class="btn-row" style="margin-top:20px;"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+/* ---- Master pricing database: ingredients + costs only, independent of any recipe ---- */
+function serializeIngredientForBackup(item){
+  const base = {
+    id:item.id, name:item.name, cat:item.cat, custom:!!item.custom, costUnit:item.costUnit||'weight',
+    vegan:item.vegan, allergens:item.allergens||[], wastagePct:item.wastagePct||0,
+    kcal:item.kcal, fat:item.fat, satFat:item.satFat, sugar:item.sugar, protein:item.protein, carbs:item.carbs,
+    bulkCurrency:item.bulkCurrency||'KWD',
+  };
+  if(item.costUnit==='piece'){
+    return {...base, costKg:rawCostKg(item), pieceWeightG:item.pieceWeightG, bulkPieces:item.bulkPieces, bulkCost:item.bulkCost};
+  }
+  if(item.costUnit==='unit'){
+    return {...base, costPerUnit:effectiveCostPerUnit(item), bulkUnitQty:item.bulkUnitQty, bulkCost:item.bulkCost};
+  }
+  if(item.costUnit==='roll'){
+    return {...base, rollLengthM:item.rollLengthM, rollWidthMM:item.rollWidthMM, gsm:item.gsm, costPerRoll:item.costPerRoll, wrapLengthCmPerUnit:item.wrapLengthCmPerUnit};
+  }
+  return {...base, costKg:rawCostKg(item), bulkQty:item.bulkQty, bulkUnit:item.bulkUnit, bulkCost:item.bulkCost};
+}
+function exportMasterPricingJSON(){
+  const data = { exportedAt:new Date().toISOString(), ingredientCount:LIBRARY.length, ingredients: LIBRARY.map(serializeIngredientForBackup) };
+  downloadBlob(JSON.stringify(data, null, 2), 'application/json', 'master-pricing-database.json');
+}
+// Restores a serialized ingredient onto the live LIBRARY item (or creates a new one) —
+// rewrites the item's own base fields directly and clears any stale session override,
+// so the imported price becomes the new source of truth immediately.
+function applyIngredientBackup(entry){
+  let item = LIBRARY.find(i=>i.id===entry.id) || LIBRARY.find(i=>i.name.toLowerCase()===String(entry.name||'').toLowerCase());
+  const isNew = !item;
+  if(isNew){
+    item = {id:entry.id||('custom_'+safeFileName(entry.name)+'_'+Math.floor(Math.random()*999)), name:entry.name, cat:CATEGORY_ORDER.includes(entry.cat)?entry.cat:'Salt & Misc', custom:true};
+    LIBRARY.push(item);
+  }
+  item.vegan = !!entry.vegan; item.allergens = entry.allergens||[]; item.wastagePct = entry.wastagePct||0;
+  item.kcal=entry.kcal||0; item.fat=entry.fat||0; item.satFat=entry.satFat||0; item.sugar=entry.sugar||0; item.protein=entry.protein||0; item.carbs=entry.carbs||0;
+  item.costUnit = entry.costUnit==='weight' ? undefined : entry.costUnit;
+  item.bulkCurrency = entry.bulkCurrency||'KWD';
+  delete costOverrides[item.id]; // imported value becomes the new base price, not a layered override
+  if(entry.costUnit==='piece'){ item.costKg=entry.costKg||0; item.pieceWeightG=entry.pieceWeightG||50; item.bulkPieces=entry.bulkPieces; item.bulkCost=entry.bulkCost; }
+  else if(entry.costUnit==='unit'){ item.costPerUnit=entry.costPerUnit||0; item.bulkUnitQty=entry.bulkUnitQty; item.bulkCost=entry.bulkCost; }
+  else if(entry.costUnit==='roll'){ item.rollLengthM=entry.rollLengthM; item.rollWidthMM=entry.rollWidthMM; item.gsm=entry.gsm; item.costPerRoll=entry.costPerRoll; item.wrapLengthCmPerUnit=entry.wrapLengthCmPerUnit; }
+  else { item.costKg=entry.costKg||0; item.bulkQty=entry.bulkQty; item.bulkUnit=entry.bulkUnit; item.bulkCost=entry.bulkCost; }
+  if(isNew){
+    let qty=0, note='Added via pricing import';
+    if(entry.costUnit==='piece') qty = entry.bulkPieces||0;
+    else if(entry.costUnit==='unit') qty = entry.bulkUnitQty||0;
+    else if(entry.costUnit==='roll') qty = 0; // roll stock isn't tracked in simple units here
+    else qty = (entry.bulkUnit==='kg'?(entry.bulkQty||0):(entry.bulkQty||0)/1000)*1000;
+    if(qty>0) addInventoryStock(item.id, qty, note);
+  }
+  return isNew;
+}
+function importMasterPricingData(parsed){
+  const entries = Array.isArray(parsed) ? parsed : (parsed.ingredients||[]);
+  let updated=0, added=0;
+  entries.forEach(entry=>{ if(applyIngredientBackup(entry)) added++; else updated++; });
+  return {updated, added};
+}
+function handleImportPricingFile(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      const {updated, added} = importMasterPricingData(parsed);
+      document.getElementById('pricingImportResult').textContent = `Updated ${updated}, added ${added} new ingredient${added!==1?'s':''}.`;
+      renderAll();
+    }catch(e){ document.getElementById('pricingImportResult').style.color='var(--warn)'; document.getElementById('pricingImportResult').textContent = 'Could not read file: '+e.message; }
+  };
+  reader.readAsText(file);
+}
+
+/* ---- Full session backup: pricing + all saved recipes + current builder draft ---- */
+function exportFullBackup(){
+  const data = {
+    exportedAt: new Date().toISOString(),
+    ingredients: LIBRARY.map(serializeIngredientForBackup),
+    projects: projects,
+    inventory: inventory,
+    currentDraft: {
+      name: document.getElementById('recipeName').value,
+      unitWeightG: parseFloat(document.getElementById('unitWeightG').value)||1,
+      methodNotes: document.getElementById('methodNotes').value,
+      items: recipe,
+    },
+  };
+  downloadBlob(JSON.stringify(data, null, 2), 'application/json', 'full-session-backup.json');
+}
+function handleImportBackupFile(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      const {updated, added} = importMasterPricingData({ingredients:parsed.ingredients||[]});
+      if(Array.isArray(parsed.projects)){
+        projects = parsed.projects;
+        const maxNum = projects.reduce((m,p)=>Math.max(m, parseInt((p.id||'P0').replace('P',''))||0), 0);
+        projectCounter = maxNum+1;
+      }
+      if(parsed.inventory && typeof parsed.inventory==='object'){ inventory = parsed.inventory; }
+      if(parsed.currentDraft){
+        document.getElementById('recipeName').value = parsed.currentDraft.name||'Untitled Recipe';
+        document.getElementById('unitWeightG').value = parsed.currentDraft.unitWeightG||90;
+        document.getElementById('methodNotes').value = parsed.currentDraft.methodNotes||'';
+        recipe = parsed.currentDraft.items||[];
+      }
+      document.getElementById('backupImportResult').textContent = `Restored: ${updated} prices updated, ${added} new ingredients, ${projects.length} saved recipe${projects.length!==1?'s':''}.`;
+      switchToBuilderTab();
+      renderAll();
+    }catch(e){ document.getElementById('backupImportResult').style.color='var(--warn)'; document.getElementById('backupImportResult').textContent = 'Could not read file: '+e.message; }
+  };
+  reader.readAsText(file);
+}
+
+function buildRecipeExportObject(snapshotArg){
+  const snap = snapshotArg!==undefined ? snapshotArg : {
+    name: document.getElementById('recipeName').value,
+    unitWeightG: parseFloat(document.getElementById('unitWeightG').value)||1,
+    methodNotes: document.getElementById('methodNotes').value,
+    items: recipe,
+  };
+  const c = computeTotals(snap.items);
+  const unitW = snap.unitWeightG||1;
+  const estYield = c.totalG>0 ? Math.floor(c.totalG/unitW) : 0;
+  return {
+    name: snap.name,
+    unitWeightG: unitW,
+    methodNotes: snap.methodNotes,
+    ingredients: snap.items.map(r=>{
+      const item = getItem(r.id); if(!item) return null;
+      const packaging = isPackagingItem(item);
+      return {
+        name: item.name,
+        category: item.cat,
+        quantity: r.g,
+        quantityUnit: packaging ? 'pieces' : 'g',
+        cost: packaging ? effectiveCostPerUnit(item)*r.g : (effectiveCostKg(item)/1000)*r.g,
+        supplier: r.supplier||'',
+        allergens: item.allergens||[],
+      };
+    }).filter(Boolean),
+    totalFoodWeightG: c.totalG,
+    estimatedYieldPieces: estYield,
+    ingredientCost: c.cost,
+    packagingCost: c.packagingCost,
+    totalCost: c.cost+c.packagingCost,
+    allergens: c.allergens,
+    additives: c.additives.map(a=>({code:a.ecode, name:a.name})),
+    exportedAt: new Date().toISOString(),
+  };
+}
+function exportCurrentRecipeJSON(snapshot){
+  const data = buildRecipeExportObject(snapshot);
+  downloadBlob(JSON.stringify(data, null, 2), 'application/json', `${safeFileName(data.name)}.json`);
+}
+function exportCurrentRecipeCSV(snapshot){
+  const data = buildRecipeExportObject(snapshot);
+  const rows = [['Ingredient','Category','Quantity','Unit','Cost','Supplier','Allergens']];
+  data.ingredients.forEach(i=>rows.push([i.name, i.category, i.quantity, i.quantityUnit, i.cost.toFixed(3), i.supplier, i.allergens.join('; ')]));
+  rows.push([]);
+  rows.push(['Total ingredient cost','','','',data.ingredientCost.toFixed(3)]);
+  rows.push(['Total packaging cost','','','',data.packagingCost.toFixed(3)]);
+  rows.push(['Grand total','','','',data.totalCost.toFixed(3)]);
+  const csv = rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadBlob(csv, 'text/csv', `${safeFileName(data.name)}.csv`);
+}
+function exportCurrentRecipeText(snapshot){
+  const data = buildRecipeExportObject(snapshot);
+  let txt = `${data.name}\nExported ${new Date(data.exportedAt).toLocaleString()}\n\n`;
+  txt += `Weight per piece: ${data.unitWeightG}g · Estimated yield: ${data.estimatedYieldPieces} pieces\n\n`;
+  txt += `INGREDIENTS\n`;
+  data.ingredients.forEach(i=>{ txt += `- ${i.name}: ${i.quantity}${i.quantityUnit==='pieces'?' pcs':'g'} (${i.cost.toFixed(3)})${i.supplier?' — '+i.supplier:''}\n`; });
+  txt += `\nALLERGENS: ${data.allergens.length?data.allergens.join(', '):'None detected'}\n`;
+  txt += `ADDITIVES: ${data.additives.length?data.additives.map(a=>`${a.code} (${a.name})`).join(', '):'None — clean label'}\n\n`;
+  txt += `Ingredient cost: ${data.ingredientCost.toFixed(3)}\nPackaging cost: ${data.packagingCost.toFixed(3)}\nTotal cost: ${data.totalCost.toFixed(3)}\n\n`;
+  txt += `METHOD\n${data.methodNotes}\n`;
+  downloadBlob(txt, 'text/plain', `${safeFileName(data.name)}.txt`);
+}
+
+function exportAllSavedJSON(){
+  const data = projects.map(p=>({
+    name: p.name,
+    versions: p.versions.map(v=>({
+      label: v.label, status: v.status, score: v.score, scoreNotes: v.scoreNotes, rationale: v.rationale,
+      createdAt: v.createdAt, diffs: v.diffs,
+      formulation: {
+        unitWeightG: v.snapshot.unitWeightG, methodNotes: v.snapshot.methodNotes,
+        ingredients: v.snapshot.items.map(i=>{ const ing=getItem(i.id); return ing?{name:ing.name, quantity:i.g}:null; }).filter(Boolean),
+      },
+      bakeTest: v.bakeTest,
+    })),
+  }));
+  downloadBlob(JSON.stringify(data, null, 2), 'application/json', 'all-saved-recipes.json');
+}
+function exportAllSavedCSV(){
+  const rows = [['Recipe','Version','Status','Score','Rationale','Created','Moisture Loss %','Wastage %','Actual Yield (pcs)']];
+  projects.forEach(p=>{
+    p.versions.forEach(v=>{
+      rows.push([p.name, v.label, v.status, v.score!==null?v.score:'', v.rationale, new Date(v.createdAt).toLocaleDateString(),
+        v.bakeTest?v.bakeTest.moistureLossPct.toFixed(1):'', v.bakeTest?v.bakeTest.wastagePct.toFixed(1):'', v.bakeTest?v.bakeTest.actualYieldPieces:'']);
+    });
+  });
+  const csv = rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadBlob(csv, 'text/csv', 'all-saved-recipes.csv');
+}
+
+/* ================= TEMPLATE / RESET ================= */
+// Imports a recipe exported by this same tool (exportCurrentRecipeJSON / a saved-version export)
+// as the new working draft — the practical way to fork a base recipe into a flavor variant
+// from a file, rather than only from something already saved in this session.
+function handleImportRecipeFile(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!Array.isArray(data.ingredients)) throw new Error('Not a recognized recipe export file');
+      const newRecipe = [];
+      const unmatched = [];
+      data.ingredients.forEach(ing=>{
+        const item = LIBRARY.find(i=>i.name.toLowerCase()===String(ing.name||'').toLowerCase());
+        if(!item){ unmatched.push(ing.name); return; }
+        newRecipe.push({id:item.id, g:ing.quantity||0, supplier:ing.supplier||''});
+      });
+      switchToBuilderTab();
+      document.getElementById('recipeName').value = data.name||'Imported Recipe';
+      document.getElementById('unitWeightG').value = data.unitWeightG||90;
+      document.getElementById('methodNotes').value = data.methodNotes||'';
+      recipe = newRecipe;
+      renderAll();
+      if(unmatched.length){
+        const body = document.getElementById('modalBody');
+        body.innerHTML = `
+          <h3>Recipe imported — some ingredients not found</h3>
+          <p style="font-size:12px;color:var(--ink-soft);">"${data.name}" loaded with ${newRecipe.length} of ${data.ingredients.length} ingredients. These weren't in your library and were skipped — add them via Manage categories &amp; ingredients (Inventory tab), then re-import if you want them included:</p>
+          <div class="warn-box">${unmatched.join(', ')}</div>
+          <div class="btn-row"><button class="btn ghost" onclick="closeModal()">Got it</button></div>
+        `;
+        document.getElementById('modalBackdrop').classList.add('open');
+      }
+    }catch(e){
+      const body = document.getElementById('modalBody');
+      body.innerHTML = `<h3>Couldn't import this file</h3><p style="font-size:12px;color:var(--warn);">${e.message}</p><div class="btn-row"><button class="btn ghost" onclick="closeModal()">Close</button></div>`;
+      document.getElementById('modalBackdrop').classList.add('open');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // allow re-selecting the same file later
+}
+/* ================= BULK RECIPE IMPORT — BASE + VARIANTS, ONE FILE =================
+   CSV columns: Recipe, Code, BaseCode, Ingredient, Quantity, Unit, Supplier, PieceWeightG
+   - Recipe: the recipe this row belongs to (repeat the same name across its ingredient rows)
+   - Code: a short reusable tag for THIS recipe, set once, so later variants can reference it
+     instead of retyping the full name — e.g. "B1" for "Ice Cream Base"
+   - BaseCode: the Code (or, if you didn't bother assigning one, the exact Recipe name) of an
+     already-defined recipe earlier in the same file, whose ingredients get pulled in first
+   - Ingredient/Quantity/Unit/Supplier: a normal ingredient line, matched by name against the
+     library — same matching rules as the goods-received CSV import
+   Each resulting recipe is created as its own saved project, v1.0, with a rationale noting
+   what base (if any) it was built from.
+================================================================= */
+function downloadBulkRecipeTemplate(){
+  const csv = [
+    'Recipe,Code,BaseCode,Ingredient,Quantity,Unit,Supplier,PieceWeightG',
+    'Ice Cream Base,B1,,Granulated White Sugar,1000,g,,',
+    'Ice Cream Base,B1,,"Whole Eggs (fresh, ~50g each)",500,g,,',
+    'Ice Cream Base,B1,,Canola Oil,300,g,,',
+    'Vanilla Ice Cream,,B1,Pure Vanilla Extract,20,g,,90',
+    'Chocolate Ice Cream,,B1,Chocolate Chips (semi-sweet),150,g,,90',
+    'Cinnamon Ice Cream,,B1,Ground Cinnamon,15,g,,90',
+    '',
+  ].join('\n');
+  downloadBlob(csv, 'text/csv', 'bulk-recipe-template.csv');
+}
+function openBulkRecipeImportModal(){
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Bulk import recipes — base + variants</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">One file, one shot. Define a base recipe once, give it a short <b>Code</b>, then have every variant reference that code in <b>BaseCode</b> instead of repeating the full base recipe. Each row is added to whichever recipe it's already merged into — new items on top, or more of something already in the base.</p>
+    <div class="warn-box">If an ingredient's exact library name contains a comma — e.g. "Whole Eggs (fresh, ~50g each)" — wrap it in double quotes in the CSV, or that row's columns will shift and it won't match. The downloadable template shows the correct format.</div>
+    <div class="field"><input type="file" id="bulkRecipeFile" accept=".csv" onchange="handleBulkRecipeImport(event)"></div>
+    <div id="bulkRecipeResult" style="font-size:12px;color:var(--ink-soft);margin:10px 0;"></div>
+    <button class="btn ghost btn small" onclick="downloadBulkRecipeTemplate()">Download CSV template</button>
+    <div class="btn-row" style="margin-top:14px;"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function handleBulkRecipeImport(event){
+  const file = event.target.files[0]; if(!file) return;
+  const resultEl = document.getElementById('bulkRecipeResult');
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const rows = parseCSVSimple(ev.target.result);
+      const header = rows[0].map(h=>h.toLowerCase());
+      const idx = {
+        recipe: header.indexOf('recipe'), code: header.indexOf('code'), baseCode: header.indexOf('basecode'),
+        ing: header.indexOf('ingredient'), qty: header.indexOf('quantity'), unit: header.indexOf('unit'),
+        supplier: header.indexOf('supplier'), pieceW: header.indexOf('pieceweightg'),
+      };
+      if(idx.recipe<0){ resultEl.style.color='var(--warn)'; resultEl.textContent='CSV needs at least a "Recipe" column.'; return; }
+
+      // Group rows by recipe name, preserving first-appearance order so a base is always
+      // resolved before any variant that references it (as long as it appears earlier in the file).
+      const order = []; const groups = {};
+      rows.slice(1).forEach(row=>{
+        const name = (row[idx.recipe]||'').trim(); if(!name) return;
+        if(!groups[name]){ groups[name]=[]; order.push(name); }
+        groups[name].push(row);
+      });
+
+      const resolvedByName = {}; const resolvedByCode = {};
+      const created = []; const unmatchedIngredients = []; const missingBases = [];
+
+      order.forEach(recipeName=>{
+        const groupRows = groups[recipeName];
+        const codeRow = groupRows.find(r=>idx.code>=0 && r[idx.code] && r[idx.code].trim());
+        const code = codeRow ? codeRow[idx.code].trim() : null;
+        const baseRow = groupRows.find(r=>idx.baseCode>=0 && r[idx.baseCode] && r[idx.baseCode].trim());
+        const baseRef = baseRow ? baseRow[idx.baseCode].trim() : null;
+        const pwRow = groupRows.find(r=>idx.pieceW>=0 && r[idx.pieceW] && r[idx.pieceW].trim());
+        const unitWeightG = pwRow ? (parseFloat(pwRow[idx.pieceW])||90) : 90;
+
+        let items = [];
+        let baseName = null;
+        if(baseRef){
+          const base = resolvedByCode[baseRef] || resolvedByName[baseRef.toLowerCase()];
+          if(base){ items = base.items.map(i=>({...i})); baseName = base.name; }
+          else missingBases.push({recipe:recipeName, baseRef});
+        }
+
+        groupRows.forEach(row=>{
+          const ingName = idx.ing>=0 ? (row[idx.ing]||'').trim() : '';
+          if(!ingName) return;
+          const qty = idx.qty>=0 ? parseFloat(row[idx.qty])||0 : 0;
+          const unit = (idx.unit>=0 ? (row[idx.unit]||'g').trim().toLowerCase() : 'g')||'g';
+          const supplier = idx.supplier>=0 ? (row[idx.supplier]||'').trim() : '';
+          if(qty<=0) return;
+          const item = LIBRARY.find(i=>i.name.toLowerCase()===ingName.toLowerCase());
+          if(!item){ unmatchedIngredients.push({recipe:recipeName, ingredient:ingName}); return; }
+          const isPackagingQty = item.costUnit==='unit'||item.costUnit==='roll';
+          const g = isPackagingQty ? qty : (unit==='kg'?qty*1000:qty);
+          const existing = items.find(i=>i.id===item.id);
+          if(existing) existing.g += g;
+          else items.push({id:item.id, g, supplier});
+        });
+
+        resolvedByName[recipeName.toLowerCase()] = {name:recipeName, items, unitWeightG};
+        if(code) resolvedByCode[code] = {name:recipeName, items, unitWeightG};
+
+        const project = {id:'P'+(projectCounter++), name:recipeName, versions:[]};
+        const rationale = baseName ? `Bulk imported — built from base "${baseName}"` : (code ? `Bulk imported — base recipe (code ${code})` : 'Bulk imported');
+        project.versions.push({
+          id:project.id+'-v1', lineageId:project.id, parentId:null, label:'1.0',
+          diffs:[], rationale, status:'draft', score:null, scoreNotes:'', bakeTest:null, createdAt:new Date().toISOString(),
+          snapshot:{name:recipeName, unitWeightG, methodNotes:'', items},
+        });
+        projects.push(project);
+        created.push(recipeName);
+      });
+
+      let msg = `Created ${created.length} recipe${created.length!==1?'s':''}: ${created.join(', ')}.`;
+      if(missingBases.length) msg += ` Base not found for: ${missingBases.map(m=>`${m.recipe} (looked for "${m.baseRef}")`).join(', ')} — those recipes were created with only their own listed ingredients, no base merged in.`;
+      if(unmatchedIngredients.length) msg += ` Ingredients not in library, skipped: ${unmatchedIngredients.map(u=>`${u.ingredient} (in ${u.recipe})`).join(', ')}.`;
+      resultEl.style.color = (missingBases.length||unmatchedIngredients.length) ? 'var(--apricot)' : 'var(--mint)';
+      resultEl.innerHTML = msg;
+      renderAll();
+    }catch(e){ resultEl.style.color='var(--warn)'; resultEl.textContent='Could not read file: '+e.message; }
+  };
+  reader.readAsText(file);
+}
+
+function switchToBuilderTab(){
+  activeTab='builder';
+  document.getElementById('builderView').style.display='block';
+  document.getElementById('costingView').style.display='none';
+  document.getElementById('inventoryView').style.display='none';
+  document.getElementById('testingView').style.display='none';
+}
+function loadTemplate(key){
+  const t = TEMPLATES[key]; if(!t) return;
+  switchToBuilderTab();
+  document.getElementById('recipeName').value = t.name;
+  document.getElementById('unitWeightG').value = t.unitWeightG;
+  recipe = t.items.map(i=>({id:i.id, g:i.g}));
+  costOverrides = {};
+  renderAll();
+}
+function resetRecipe(){
+  switchToBuilderTab();
+  recipe = [];
+  document.getElementById('recipeName').value = 'Untitled Recipe';
+  document.getElementById('unitWeightG').value = 90;
+  document.getElementById('methodNotes').value = '';
+  renderAll();
+}
+
+/* ================= COMPUTE ================= */
+function computeTotals(items){
+  const list = items || recipe;
+  const foodList = list.filter(r=>getItem(r.id) && !isPackagingItem(getItem(r.id)));
+  const packagingList = list.filter(r=>getItem(r.id) && isPackagingItem(getItem(r.id)));
+  const flourItems = foodList.filter(r=>getItem(r.id).cat==='Flours');
+  const flourTotalG = flourItems.reduce((s,r)=>s+r.g,0);
+  const totalG = foodList.reduce((s,r)=>s+r.g,0);
+  const acc = {kcal:0,fat:0,satFat:0,sugar:0,protein:0,carbs:0};
+  let cost = 0;
+  const allergenSet = new Set();
+  const additives = [];
+  foodList.forEach(r=>{
+    const item = getItem(r.id); if(!item) return;
+    const frac = r.g/100;
+    acc.kcal += item.kcal*frac; acc.fat += item.fat*frac; acc.satFat += item.satFat*frac;
+    acc.sugar += item.sugar*frac; acc.protein += item.protein*frac; acc.carbs += item.carbs*frac;
+    cost += (effectiveCostKg(item)/1000)*r.g;
+    (item.allergens||[]).forEach(a=>allergenSet.add(a));
+    if(item.ecode) additives.push(item);
+  });
+  let packagingCost = 0;
+  const packagingLines = [];
+  packagingList.forEach(r=>{
+    const item = getItem(r.id); if(!item) return;
+    const unitCost = effectiveCostPerUnit(item);
+    const lineCost = unitCost*r.g; // r.g holds unit COUNT for packaging items, not grams
+    packagingCost += lineCost;
+    packagingLines.push({name:item.name, qty:r.g, unitCost, lineCost});
+  });
+  return {flourTotalG, totalG, acc, cost, allergens:[...allergenSet], additives, packagingCost, packagingLines};
+}
+
+/* ================= RENDER RECIPE TABLE ================= */
+function renderRecipeTable(){
+  const table = document.getElementById('recipeTable');
+  if(recipe.length===0){
+    table.innerHTML = `<tr><td class="empty-recipe">No ingredients yet — click items in the library on the left, use "+ Add ingredient" under any section to enter one manually, or load the Banana Cake template above.</td></tr>`;
+    document.getElementById('batchTotal').innerHTML = '';
+    return;
+  }
+  const {flourTotalG, totalG, cost:totalCost, packagingCost} = computeTotals();
+  let html = `<tr><th>Ingredient</th><th style="text-align:right;">Grams / Qty</th><th style="text-align:right;">Baker's %</th><th style="text-align:right;">% of batch</th><th style="text-align:right;">Cost</th><th>Brand / Supplier</th><th></th></tr>`;
+  CATEGORY_ORDER.forEach(cat=>{
+    const items = recipe.filter(r=>getItem(r.id) && getItem(r.id).cat===cat);
+    if(items.length===0) return;
+    const isPacking = cat==='Packing Materials';
+    html += `<tr class="section-row"><td colspan="7">${cat}${isPacking?' — quantity is unit count, not grams':''}</td></tr>`;
+    items.forEach(r=>{
+      const item = getItem(r.id);
+      const bp = flourTotalG>0 ? (r.g/flourTotalG*100) : 0;
+      const pct = totalG>0 ? (r.g/totalG*100) : 0;
+      const lineCost = isPacking ? effectiveCostPerUnit(item)*r.g : (effectiveCostKg(item)/1000)*r.g;
+      html += `<tr class="${item.ecode?'additive-row':''}">
+        <td><span class="ingredient-link" onclick="openIngredientEditModal('${r.id}')" title="Edit nutrition, allergens, and cost">${item.name}</span>${item.ecode?` <span class="e-code" style="font-family:'IBM Plex Mono',monospace;">(${item.ecode})</span>`:''}${item.custom?'<span class="custom-tag">CUSTOM</span>':''}</td>
+        <td style="text-align:right;">${isPacking
+          ? `<input type="number" class="gram-input" value="${r.g}" min="0" step="1" title="Units (packs/boxes/labels) used" onchange="updateGrams('${r.id}', this.value)">`
+          : `<input type="text" inputmode="decimal" class="gram-input" value="${(r.g/1000).toFixed(2)}" title="Weight in kg, e.g. 0.25 = 250g. Or use an explicit suffix like 60g." onchange="updateGrams('${r.id}', this.value)">`}</td>
+        <td style="text-align:right;" class="bp-val">${isPacking?'—':(item.cat==='Flours'?'100.0':bp.toFixed(1)+'%')}</td>
+        <td style="text-align:right;">${isPacking?'—':pct.toFixed(1)+'%'}</td>
+        <td style="text-align:right;" class="cost-val">${lineCost.toFixed(3)}</td>
+        <td><input type="text" class="supplier-input" list="supplierOptions" placeholder="e.g. Americana, local supplier…" value="${r.supplier||''}" onchange="updateSupplier('${r.id}', this.value)"></td>
+        <td style="text-align:center;"><span class="rm-btn" onclick="removeFromRecipe('${r.id}')">✕</span></td>
+      </tr>`;
+    });
+  });
+  table.innerHTML = html;
+  const unitW = parseFloat(document.getElementById('unitWeightG').value)||1;
+  const estYield = totalG>0 ? Math.floor(totalG/unitW) : 0;
+  const grandTotal = totalCost+packagingCost;
+  document.getElementById('batchTotal').innerHTML = `<span>Total batch weight: ${totalG.toFixed(0)} g (flour basis: ${flourTotalG.toFixed(0)} g) · est. ${estYield} pieces at ${unitW}g pre-bake</span><span>Ingredients: ${totalCost.toFixed(3)}${packagingCost>0?` + Packaging: ${packagingCost.toFixed(3)}`:''} = ${grandTotal.toFixed(3)} (${(grandTotal/estYield||0).toFixed(3)}/piece)</span>`;
+}
+function updateSupplier(id, val){
+  const r = recipe.find(r=>r.id===id);
+  if(r) r.supplier = val;
+}
+
+/* ================= PREVIEW PANEL ================= */
+function renderPreview(){
+  const {totalG, acc, cost, allergens, additives, packagingCost} = computeTotals();
+  const unitW = parseFloat(document.getElementById('unitWeightG').value)||1;
+  const per100g = {}; Object.keys(acc).forEach(k=> per100g[k] = totalG>0 ? acc[k]/totalG*100 : 0 );
+  const perSliceG = unitW;
+  const perSlice = {}; Object.keys(per100g).forEach(k=> perSlice[k] = per100g[k]*unitW/100 );
+  const costPerKgBatch = totalG>0 ? cost/totalG*1000 : 0;
+  const costPerSlice = costPerKgBatch/1000*unitW;
+  const estYield = totalG>0 ? Math.floor(totalG/unitW) : 0;
+  const packagingPerSlice = estYield>0 ? packagingCost/estYield : 0;
+
+  document.getElementById('previewPanel').innerHTML = `
+    <div class="ticket-head">
+      <div class="ticket-head-body">
+        <div class="t-eyebrow">Formulation ticket</div>
+        <div class="t-name">${document.getElementById('recipeName').value||'Untitled Recipe'}</div>
+        <div class="t-code">${SESSION_TICKET_CODE}</div>
+      </div>
+    </div>
+    <h3>Per piece (${perSliceG.toFixed(0)}g target, ~${estYield} pieces est.)</h3>
+    <div class="card"><div class="nutri-grid">
+      <div class="nutri-cell"><div class="num">${Math.round(perSlice.kcal)}</div><div class="lab">kcal</div></div>
+      <div class="nutri-cell"><div class="num">${perSlice.fat.toFixed(1)}g</div><div class="lab">fat (${perSlice.satFat.toFixed(1)}g sat)</div></div>
+      <div class="nutri-cell"><div class="num">${perSlice.sugar.toFixed(1)}g</div><div class="lab">sugar</div></div>
+      <div class="nutri-cell"><div class="num">${perSlice.protein.toFixed(1)}g</div><div class="lab">protein</div></div>
+    </div></div>
+    <h3>Per 100g (label basis)</h3>
+    <div class="card">
+      <div class="tc-row"><span class="k">Calories</span><span class="v">${Math.round(per100g.kcal)} kcal</span></div>
+      <div class="tc-row"><span class="k">Fat / saturated</span><span class="v">${per100g.fat.toFixed(1)}g / ${per100g.satFat.toFixed(1)}g</span></div>
+      <div class="tc-row"><span class="k">Carbs / of which sugar</span><span class="v">${per100g.carbs.toFixed(1)}g / ${per100g.sugar.toFixed(1)}g</span></div>
+      <div class="tc-row"><span class="k">Protein</span><span class="v">${per100g.protein.toFixed(1)}g</span></div>
+    </div>
+    <h3>Allergens</h3>
+    <div class="card">${allergens.length?allergens.map(a=>`<span class="additive-chip" style="color:var(--warn);border-color:var(--warn);background:rgba(194,91,74,.08);">⚠ ${a}</span>`).join(''):'<span class="empty">None detected</span>'}</div>
+    <h3>Additives &amp; colours (E-number)</h3>
+    <div class="card">${additives.length?additives.map(a=>`<span class="additive-chip">${a.ecode} — ${a.name}</span>`).join(''):'<span class="empty">None — clean label</span>'}</div>
+    <h3>Cost</h3>
+    <div class="card">
+      <div class="tc-row"><span class="k">Batch cost (ingredients)</span><span class="v">${cost.toFixed(3)}</span></div>
+      <div class="tc-row"><span class="k">Cost per slice (ingredients)</span><span class="v">${costPerSlice.toFixed(3)}</span></div>
+      ${packagingCost>0?`<div class="tc-row"><span class="k">Packaging cost (batch)</span><span class="v">${packagingCost.toFixed(3)}</span></div>
+      <div class="tc-row"><span class="k">Packaging cost per slice</span><span class="v">${packagingPerSlice.toFixed(3)}</span></div>
+      <div class="tc-row"><span class="k"><b>Total cost per slice</b></span><span class="v"><b>${(costPerSlice+packagingPerSlice).toFixed(3)}</b></span></div>`:''}
+    </div>
+    <div class="src-note">Baker's percentage expresses every ingredient as a % of total flour weight. Nutrition and dosage figures are engineering estimates — verify against supplier spec sheets, a lab panel, and current EU 1333/2008 (or your local regulator) before printing any label.</div>
+  `;
+}
+
+/* ================= SAVE AS VERSION ================= */
+function openSaveVersionModal(){
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Save as version</h3>
+    <div class="field"><label>Recipe project</label>
+      <select id="sProject"><option value="__new__">+ New project: "${document.getElementById('recipeName').value}"</option>
+      ${projects.map(p=>`<option value="${p.id}">${p.name} (${p.versions.length} version${p.versions.length!==1?'s':''})</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Rationale (required)</label><textarea id="sRationale" placeholder="What changed and why? e.g. 'Reduced sugar 10%, added E282 for shelf life'"></textarea></div>
+    <div id="sErr" class="err-text"></div>
+    <div class="btn-row" style="display:flex;gap:8px;"><button class="btn primary" onclick="confirmSaveVersion()">Save version</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function currentSnapshot(){
+  return {
+    name: document.getElementById('recipeName').value.trim()||'Untitled Recipe',
+    unitWeightG: parseFloat(document.getElementById('unitWeightG').value)||1,
+    items: JSON.parse(JSON.stringify(recipe)),
+    methodNotes: document.getElementById('methodNotes').value,
+  };
+}
+function diffSnapshots(a,b){
+  const diffs = [];
+  if(a.unitWeightG!==b.unitWeightG) diffs.push({field:'Weight per piece (g)', from:a.unitWeightG, to:b.unitWeightG});
+  const aIds = a.items.map(i=>i.id), bIds = b.items.map(i=>i.id);
+  b.items.filter(i=>!aIds.includes(i.id)).forEach(i=>diffs.push({field:'Ingredient added', from:'—', to:(getItem(i.id)?.name||i.id)+' ('+i.g+'g)'}));
+  a.items.filter(i=>!bIds.includes(i.id)).forEach(i=>diffs.push({field:'Ingredient removed', from:(getItem(i.id)?.name||i.id), to:'—'}));
+  b.items.forEach(bi=>{ const ai=a.items.find(x=>x.id===bi.id); if(ai && ai.g!==bi.g) diffs.push({field:(getItem(bi.id)?.name||bi.id)+' (g)', from:ai.g, to:bi.g}); });
+  return diffs;
+}
+function confirmSaveVersion(){
+  if(recipe.length===0){ document.getElementById('sErr').textContent = 'Add at least one ingredient before saving a version.'; return; }
+  const rationale = document.getElementById('sRationale').value.trim();
+  if(!rationale){ document.getElementById('sErr').textContent = 'Rationale is required.'; return; }
+  const projSel = document.getElementById('sProject').value;
+  const snapshot = currentSnapshot();
+  let project;
+  if(projSel==='__new__'){
+    project = {id:'P'+(projectCounter++), name:snapshot.name, versions:[]};
+    projects.push(project);
+  } else {
+    project = projects.find(p=>p.id===projSel);
+  }
+  const parent = project.versions[project.versions.length-1] || null;
+  const label = parent ? (parseFloat(parent.label)+0.1).toFixed(1) : '1.0';
+  const version = {
+    id: project.id+'-v'+(project.versions.length+1), label, parentId: parent?parent.id:null,
+    rationale, snapshot, status:'draft', score:null, scoreNotes:'', bakeTest:null, createdAt:new Date().toISOString(),
+    diffs: parent ? diffSnapshots(parent.snapshot, snapshot) : [],
+  };
+  project.versions.push(version);
+  closeModal();
+  activeTab='testing'; document.getElementById('builderView').style.display='none'; document.getElementById('costingView').style.display='none'; document.getElementById('inventoryView').style.display='none'; document.getElementById('testingView').style.display='block';
+  renderAll();
+}
+
+/* ================= TESTING / SAVED RECIPES VIEW ================= */
+function renderTestingView(){
+  const wrap = document.getElementById('testingView');
+  const headerBar = `
+    <div class="testing-wrap" style="padding-bottom:0;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <h3 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:700;margin:0;">Saved Recipes</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost btn small" onclick="downloadBulkRecipeTemplate()">Download CSV template</button>
+          <button class="btn primary btn small" onclick="openBulkRecipeImportModal()">📄 Bulk import recipes (base + variants)</button>
+        </div>
+      </div>
+    </div>
+  `;
+  if(projects.length===0){ wrap.innerHTML = headerBar+`<div class="testing-wrap"><div class="empty-recipe">No saved versions yet. Build a recipe in the Builder tab and click "Save as version" — or bulk-import a base recipe and its variants above.</div></div>`; return; }
+  let html = headerBar+`<div class="testing-wrap">`;
+  projects.forEach(p=>{
+    const latestVid = p.versions[p.versions.length-1].id;
+    html += `<div class="project-card"><div class="project-head"><div><span class="pname ingredient-link" onclick="loadVersionIntoBuilder('${p.id}','${latestVid}')" title="Open latest version in view &amp; edit mode">${p.name}</span></div><div class="pmeta">${p.versions.length} version${p.versions.length!==1?'s':''}</div></div>`;
+    p.versions.slice().reverse().forEach(v=>{
+      const d = computeTotals(v.snapshot.items);
+      const unitW = v.snapshot.unitWeightG||1;
+      const costPerKgBatch = d.totalG>0 ? d.cost/d.totalG*1000 : 0;
+      const costPerPiece = costPerKgBatch/1000*unitW;
+      const theoYieldPieces = d.totalG>0 ? Math.floor(d.totalG/unitW) : 0;
+      html += `<div class="version-row">
+        <div style="flex:1;">
+          <span class="vlabel ingredient-link" onclick="loadVersionIntoBuilder('${p.id}','${v.id}')" title="Open this version in view &amp; edit mode">v${v.label}</span><span class="status-pill status-${v.status}">${v.status}</span>${v.score!==null?`<span class="score-badge">${v.score}/10</span>`:''}
+          <div class="vrationale">${v.rationale}</div>
+          ${v.diffs&&v.diffs.length?`<div class="vrationale" style="color:var(--frost);">${v.diffs.slice(0,2).map(d=>d.field+': '+d.from+' → '+d.to).join(' · ')}${v.diffs.length>2?' · +'+(v.diffs.length-2)+' more':''}</div>`:''}
+          <div class="vtest-line">Per 100g: ${Math.round(d.acc.kcal/d.totalG*100)} kcal · Cost/piece: ${costPerPiece.toFixed(3)} (${unitW}g target)${v.bakeTest?` · Actual yield: ${v.bakeTest.actualYieldPieces} pcs (theo. ${v.bakeTest.theoreticalYieldPieces}) · Moisture loss: ${v.bakeTest.moistureLossPct.toFixed(1)}% · Wastage: ${v.bakeTest.wastagePct.toFixed(1)}%`:` · Est. yield (pre-bake): ${theoYieldPieces} pcs · No bake test logged`}</div>
+        </div>
+        <div class="dot-menu-wrap">
+          <div class="dot-btn" onclick="toggleDotMenu('${v.id}')">⋮</div>
+          <div class="dot-dropdown ${openDotMenuId===v.id?'open':''}" id="dot-${v.id}">
+            <div onclick="openViewRecipeModalForVersion('${p.id}','${v.id}')">View recipe</div>
+            <div onclick="openExportModalForVersion('${p.id}','${v.id}')">Export this version</div>
+            <div onclick="openBakeTestModal('${p.id}','${v.id}')">Log bake test (yield &amp; moisture)</div>
+            <div onclick="openScoreModal('${p.id}','${v.id}')">Score &amp; approve</div>
+            <div onclick="viewDiff('${p.id}','${v.id}')">View iteration diff</div>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+  wrap.innerHTML = html;
+}
+function toggleDotMenu(id){ openDotMenuId = openDotMenuId===id?null:id; renderTestingView(); }
+
+function loadVersionIntoBuilder(pid,vid){
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  document.getElementById('recipeName').value = v.snapshot.name;
+  document.getElementById('unitWeightG').value = v.snapshot.unitWeightG;
+  document.getElementById('methodNotes').value = v.snapshot.methodNotes;
+  recipe = JSON.parse(JSON.stringify(v.snapshot.items));
+  switchToBuilderTab();
+  renderAll();
+}
+function openViewRecipeModalForVersion(pid, vid){
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  openViewRecipeModal(`${p.name} — v${v.label}`, v.snapshot.items);
+}
+let pendingExportSnapshot = null;
+function openExportModalForVersion(pid, vid){
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  pendingExportSnapshot = {name:`${p.name} — v${v.label}`, unitWeightG:v.snapshot.unitWeightG, methodNotes:v.snapshot.methodNotes, items:v.snapshot.items};
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Export — ${pendingExportSnapshot.name}</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">Exporting never changes or clears anything — this saved version stays exactly as it is.</p>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn primary" onclick="exportCurrentRecipeJSON(pendingExportSnapshot)">Download JSON</button>
+      <button class="btn ghost" onclick="exportCurrentRecipeCSV(pendingExportSnapshot)">Download CSV</button>
+      <button class="btn ghost" onclick="exportCurrentRecipeText(pendingExportSnapshot)">Download spec sheet (.txt)</button>
+    </div>
+    <div class="btn-row" style="margin-top:20px;"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+function openBakeTestModal(pid,vid){
+  const body = document.getElementById('modalBody');
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  const unitW = v.snapshot.unitWeightG||1;
+  body.innerHTML = `
+    <h3>Log bake test — v${v.label}</h3>
+    <div class="warn-box">Weigh the batter/dough before baking and the finished product after baking (and cooling). Yield in pieces is derived automatically from these weights and the recipe's target weight per piece (${unitW}g) — it's not entered by hand.</div>
+    <div class="field-row">
+      <div class="field"><label>Weight before baking (g)</label><input type="number" id="tBefore" value="${computeTotals(v.snapshot.items).totalG.toFixed(0)}"></div>
+      <div class="field"><label>Weight after baking (g)</label><input type="number" id="tAfter" value=""></div>
+    </div>
+    <div class="field"><label>Trim / dropped / unusable waste (g) — optional, beyond moisture loss</label><input type="number" id="tTrim" value="0"></div>
+    <input type="hidden" id="tUnitW" value="${unitW}">
+    <div id="tPreview" class="computed-cost-preview"></div>
+    <div class="btn-row" style="display:flex;gap:8px;margin-top:10px;"><button class="btn primary" onclick="confirmBakeTest('${pid}','${vid}')">Save bake test</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+  `;
+  ['tBefore','tAfter','tTrim'].forEach(id=>document.getElementById(id).addEventListener('input', updateBakeTestPreview));
+  updateBakeTestPreview();
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function bakeTestDerived(){
+  const before = parseFloat(document.getElementById('tBefore').value)||0;
+  const after = parseFloat(document.getElementById('tAfter').value)||0;
+  const trim = parseFloat(document.getElementById('tTrim').value)||0;
+  const unitW = parseFloat(document.getElementById('tUnitW').value)||1;
+  const moistureLossPct = before>0 ? (before-after)/before*100 : 0;
+  const usableWeight = Math.max(0, after-trim);
+  const wastagePct = before>0 ? (before-usableWeight)/before*100 : 0;
+  const theoreticalYieldPieces = Math.floor(before/unitW);
+  const actualYieldPieces = Math.floor(usableWeight/unitW);
+  return {before, after, trim, unitW, moistureLossPct, usableWeight, wastagePct, theoreticalYieldPieces, actualYieldPieces};
+}
+function updateBakeTestPreview(){
+  const d = bakeTestDerived();
+  document.getElementById('tPreview').innerHTML = `Moisture loss: ${d.moistureLossPct.toFixed(1)}% &nbsp;·&nbsp; Total wastage: ${d.wastagePct.toFixed(1)}% &nbsp;·&nbsp; Derived yield: ${d.actualYieldPieces} pcs actual (theoretical ${d.theoreticalYieldPieces} pcs at ${d.unitW}g each)`;
+}
+function confirmBakeTest(pid,vid){
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  const d = bakeTestDerived();
+  v.bakeTest = {
+    beforeG:d.before, afterG:d.after, trimG:d.trim, unitWeightG:d.unitW,
+    moistureLossPct:d.moistureLossPct, usableWeightG:d.usableWeight, wastagePct:d.wastagePct,
+    theoreticalYieldPieces:d.theoreticalYieldPieces, actualYieldPieces:d.actualYieldPieces,
+  };
+  if(v.status==='draft') v.status='testing';
+  closeModal(); renderAll();
+}
+
+function openScoreModal(pid,vid){
+  const body = document.getElementById('modalBody');
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  body.innerHTML = `
+    <h3>Score &amp; approve — v${v.label}</h3>
+    <div class="field"><label>Score (1–10)</label><input type="number" id="scScore" min="1" max="10" value="${v.score||7}"></div>
+    <div class="field"><label>Status</label><select id="scStatus">
+      <option value="draft" ${v.status==='draft'?'selected':''}>Draft</option>
+      <option value="testing" ${v.status==='testing'?'selected':''}>Testing</option>
+      <option value="approved" ${v.status==='approved'?'selected':''}>Approved</option>
+      <option value="rejected" ${v.status==='rejected'?'selected':''}>Rejected</option>
+    </select></div>
+    <div class="field"><label>Notes</label><textarea id="scNotes">${v.scoreNotes||''}</textarea></div>
+    <div class="btn-row" style="display:flex;gap:8px;"><button class="btn primary" onclick="confirmScore('${pid}','${vid}')">Save</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function confirmScore(pid,vid){
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  v.score = parseInt(document.getElementById('scScore').value)||null;
+  v.status = document.getElementById('scStatus').value;
+  v.scoreNotes = document.getElementById('scNotes').value;
+  closeModal(); renderAll();
+}
+
+function viewDiff(pid,vid){
+  const body = document.getElementById('modalBody');
+  const p = projects.find(p=>p.id===pid); const v = p.versions.find(v=>v.id===vid);
+  body.innerHTML = `
+    <h3>Iteration diff — v${v.label}</h3>
+    <p style="font-size:12px;color:var(--ink-soft);">${v.parentId?'Compared to its parent version.':'This is the root version — no parent to compare.'}</p>
+    <table class="diff-table">${v.diffs&&v.diffs.length?v.diffs.map(d=>`<tr><td><b>${d.field}</b></td><td>${d.from}</td><td>→</td><td>${d.to}</td></tr>`).join(''):'<tr><td>No differences recorded</td></tr>'}</table>
+    <div class="btn-row" style="margin-top:14px;"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+/* ================= COSTING ENGINE ================= */
+// Scales the CURRENT recipe (whatever ratios are in the Builder tab) up or down to a
+// target batch weight, preserving every ingredient's proportion — then applies an
+// editable bake-loss % to show theoretical vs. actual portions and cost per portion.
+function computeCostingEngine(){
+  const base = computeTotals(recipe);
+  const targetG = costingState.targetBatchKg*1000;
+  const scale = base.totalG>0 ? targetG/base.totalG : 0;
+  const scaledLines = recipe.map(r=>{
+    const item = getItem(r.id); if(!item) return null;
+    if(isPackagingItem(item)){
+      const scaledQty = r.g*scale; // packaging quantity scales with the same batch/portion factor
+      const unitCost = effectiveCostPerUnit(item);
+      return {id:r.id, name:item.name, cat:item.cat, packaging:true, originalG:r.g, scaledG:scaledQty, costPerKg:unitCost, lineCost:unitCost*scaledQty};
+    }
+    const scaledG = r.g*scale;
+    return {id:r.id, name:item.name, cat:item.cat, packaging:false, originalG:r.g, scaledG, costPerKg:effectiveCostKg(item), lineCost:(effectiveCostKg(item)/1000)*scaledG};
+  }).filter(Boolean);
+  const totalBatchCost = scaledLines.reduce((s,l)=>s+l.lineCost,0);
+  const costPerKgBatch = costingState.targetBatchKg>0 ? totalBatchCost/costingState.targetBatchKg : 0;
+
+  const portionG = costingState.portionG||1;
+  const theoreticalPortions = Math.floor(targetG/portionG);
+  const lossWeightG = targetG*(costingState.lossPct/100);
+  const netUsableG = targetG-lossWeightG;
+  const actualPortions = Math.floor(netUsableG/portionG);
+  const costPerPortionTheoretical = theoreticalPortions>0 ? totalBatchCost/theoreticalPortions : 0;
+  const costPerPortionActual = actualPortions>0 ? totalBatchCost/actualPortions : 0;
+
+  return {scale, scaledLines, targetG, totalBatchCost, costPerKgBatch, portionG, theoreticalPortions, lossWeightG, netUsableG, actualPortions, costPerPortionTheoretical, costPerPortionActual};
+}
+
+function updateCostingInput(field, val){
+  costingState[field] = Math.max(0, parseFloat(val)||0);
+  renderCostingEngine();
+}
+
+function renderCostingEngine(){
+  const wrap = document.getElementById('costingView');
+  if(recipe.length===0){
+    wrap.innerHTML = `<div class="empty-recipe">No recipe loaded — go to the Builder tab and add ingredients (or load the Banana Cake template) before costing a batch.</div>`;
+    return;
+  }
+  const c = computeCostingEngine();
+  const recipeName = document.getElementById('recipeName').value;
+
+  wrap.innerHTML = `
+    <h3 style="font-family:'Inter',sans-serif;font-size:20px;margin:0 0 6px;">Costing Engine — ${recipeName}</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin:0 0 18px;max-width:640px;">Scales your current recipe ratios up or down to any target batch size, then applies an editable cooking-loss % to show both the theoretical portion count (raw batch weight ÷ portion size) and the real one after loss — recalculates automatically whenever you edit ingredients in the Builder tab or change the numbers below.</p>
+
+    <div class="field-row" style="margin-bottom:8px;max-width:640px;">
+      <div class="field"><label>Target batch weight (kg)</label><input type="number" id="ceBatchKg" value="${costingState.targetBatchKg}" min="0.1" step="0.1" onchange="updateCostingInput('targetBatchKg', this.value)"></div>
+      <div class="field"><label>Portion size (g)</label><input type="number" id="cePortionG" value="${costingState.portionG}" min="1" step="5" onchange="updateCostingInput('portionG', this.value)"></div>
+      <div class="field"><label>Estimated cooking loss (%)</label><input type="number" id="ceLossPct" value="${costingState.lossPct}" min="0" max="60" step="0.5" onchange="updateCostingInput('lossPct', this.value)"></div>
+    </div>
+    <p style="font-size:10.5px;color:var(--ink-soft);margin:0 0 20px;max-width:640px;">This covers any raw-to-finished shrinkage — baking evaporation for bread/cake (typically 6–10%), or moisture/fat loss when the batch involves cooked meat: ground beef pan-fried ~25–30%, roasted/braised beef or pork ~30–35%, grilled chicken breast ~25–30% (poached ~15–20%), bacon ~45–50%, baked salmon ~18–20%. Use whichever range matches your actual process, or your own logged bake-test average once you have one.</p>
+
+    <div class="panel-grid-costing" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;">
+      <div class="card">
+        <h3 style="margin-top:0;">Batch — scaled to ${costingState.targetBatchKg}kg</h3>
+        <div class="tc-row"><span class="k">Scale factor vs. current recipe</span><span class="v">×${c.scale.toFixed(3)}</span></div>
+        <div class="tc-row"><span class="k">Total batch weight</span><span class="v">${(c.targetG/1000).toFixed(2)} kg</span></div>
+        <div class="tc-row"><span class="k">Total ingredient cost</span><span class="v">${c.totalBatchCost.toFixed(3)}</span></div>
+        <div class="tc-row"><span class="k">Cost per kg of batch</span><span class="v">${c.costPerKgBatch.toFixed(3)}</span></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Portions — theoretical vs. actual (after bake loss)</h3>
+        <div class="tc-row"><span class="k">Theoretical portions (pre-loss)</span><span class="v">${c.theoreticalPortions} × ${c.portionG}g</span></div>
+        <div class="tc-row"><span class="k">Bake loss weight (${costingState.lossPct}%)</span><span class="v">${(c.lossWeightG/1000).toFixed(2)} kg</span></div>
+        <div class="tc-row"><span class="k">Net usable weight</span><span class="v">${(c.netUsableG/1000).toFixed(2)} kg</span></div>
+        <div class="tc-row"><span class="k">Actual portions (post-loss)</span><span class="v">${c.actualPortions} × ${c.portionG}g</span></div>
+        <div class="tc-row"><span class="k">Cost per portion — theoretical</span><span class="v">${c.costPerPortionTheoretical.toFixed(3)}</span></div>
+        <div class="tc-row"><span class="k">Cost per portion — actual</span><span class="v" style="color:var(--warn);">${c.costPerPortionActual.toFixed(3)}</span></div>
+      </div>
+    </div>
+
+    <h3 style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 8px;">Scaled ingredients &amp; editable pricing (dummy data — edit any cost)</h3>
+    <table class="recipe-table" style="margin-bottom:8px;">
+      <tr><th>Ingredient</th><th style="text-align:right;">Original</th><th style="text-align:right;">Scaled to batch</th><th style="text-align:right;">Cost (editable)</th><th style="text-align:right;">Line cost</th></tr>
+      ${c.scaledLines.map(l=>`<tr>
+        <td>${l.name}${l.packaging?' <span class="custom-tag" style="background:var(--additive);">PACK</span>':''}</td>
+        <td style="text-align:right;">${l.packaging?l.originalG.toFixed(0)+' pcs':l.originalG.toFixed(0)+' g'}</td>
+        <td style="text-align:right;" class="bp-val">${l.packaging?Math.round(l.scaledG)+' pcs':l.scaledG.toFixed(0)+' g'}</td>
+        <td style="text-align:right;"><input type="number" class="gram-input" style="width:80px;" value="${l.costPerKg.toFixed(3)}" step="0.001" min="0" onchange="updateCostingPrice('${l.id}', this.value)">${l.packaging?'<span style="font-size:9px;color:var(--ink-soft);">/pack</span>':'<span style="font-size:9px;color:var(--ink-soft);">/kg</span>'}</td>
+        <td style="text-align:right;">${l.lineCost.toFixed(3)}</td>
+      </tr>`).join('')}
+    </table>
+    <div class="src-note">Prices shown are dummy/editable placeholders — update any cost here (or via the ✎ icon in the ingredient library / recipe table) and every costing, recipe cost, and per-portion figure across the whole tool recalculates immediately. Packaging quantities scale with the batch the same way ingredients do, since more portions need proportionally more packs. Bake loss % defaults to an estimate — replace it with your logged bake-test average once you have a few real batches recorded in Saved Recipes &amp; Testing.</div>
+  `;
+}
+function updateCostingPrice(id, val){
+  if(!id) return;
+  costOverrides[id] = Math.max(0, parseFloat(val)||0);
+  renderCostingEngine();
+}
+
+/* ================= INVENTORY ================= */
+function inventoryUnitLabel(item){ return (item.costUnit==='piece'||item.costUnit==='unit'||item.costUnit==='roll') ? 'pcs' : 'weight'; }
+function inventoryUnitCost(item){
+  if(item.costUnit==='piece') return effectiveCostKg(item); // /kg, shown alongside per-piece separately
+  if(item.costUnit==='unit'||item.costUnit==='roll') return effectiveCostPerUnit(item);
+  return effectiveCostKg(item);
+}
+function inventoryValue(id){
+  const item = getItem(id); if(!item) return 0;
+  const qty = getInventoryQty(id);
+  if(item.costUnit==='piece') return (effectiveCostKg(item)/1000)*qty; // qty stored in grams
+  if(item.costUnit==='unit'||item.costUnit==='roll') return effectiveCostPerUnit(item)*qty; // qty stored as count
+  return (effectiveCostKg(item)/1000)*qty; // qty stored in grams
+}
+let inventorySubView = 'list'; // list | settings
+function renderInventoryView(){
+  const wrap = document.getElementById('inventoryView');
+  if(inventorySubView==='settings'){ renderIngredientSettingsView(wrap); return; }
+  const ids = Object.keys(inventory).filter(id=>getItem(id));
+  const actionBar = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;">
+      <h3 style="font-family:'Inter',sans-serif;font-size:20px;margin:0 0 6px;">Inventory</h3>
+      <button class="btn ghost btn small" onclick="inventorySubView='settings';renderAll();">⚙️ Manage categories &amp; ingredients</button>
+    </div>
+    <p style="font-size:12px;color:var(--ink-soft);margin:0 0 16px;">Stock is added automatically when a new custom ingredient is created, when you log a delivery via "Save &amp; log stock received" on an ingredient, or with the tools below.</p>
+    <div class="btn-row" style="margin-bottom:18px;flex-wrap:wrap;">
+      <button class="btn primary" onclick="openAddStockManualModal()">+ Add stock (by category)</button>
+      <button class="btn ghost" onclick="openGoodsReceivedCSVModal()">📥 Import goods received (CSV)</button>
+      <button class="btn ghost" onclick="openInvoiceScanModal()">📸 Scan supplier invoice</button>
+      ${ids.length>0?'<button class="btn ghost" onclick="openDeductRecipeModal()">📦 Log production — deduct current recipe from stock</button>':''}
+    </div>
+  `;
+  if(ids.length===0){
+    wrap.innerHTML = actionBar + `<div class="empty-recipe">No inventory yet — scan an invoice above, or add stock from any ingredient's edit panel.</div>`;
+    return;
+  }
+  let totalValue = 0;
+  const rows = ids.map(id=>{
+    const item = getItem(id);
+    const qty = getInventoryQty(id);
+    const value = inventoryValue(id);
+    totalValue += value;
+    const unitLabel = inventoryUnitLabel(item);
+    return {item, qty, value, unitLabel, lastUpdated: inventory[id].history.length ? inventory[id].history[inventory[id].history.length-1].date : null};
+  }).sort((a,b)=>a.item.cat.localeCompare(b.item.cat)||a.item.name.localeCompare(b.item.name));
+
+  let html = actionBar + `
+    <div class="card" style="max-width:340px;margin-bottom:18px;">
+      <div class="tc-row"><span class="k">Ingredients tracked</span><span class="v">${rows.length}</span></div>
+      <div class="tc-row"><span class="k">Total inventory value</span><span class="v" style="font-weight:700;">${totalValue.toFixed(3)}</span></div>
+    </div>
+    <table class="recipe-table">
+      <tr><th>Ingredient</th><th>Category</th><th style="text-align:right;">Stock on hand</th><th style="text-align:right;">Unit cost</th><th style="text-align:right;">Value</th><th></th></tr>
+      ${rows.map(r=>`<tr>
+        <td>${r.item.name}</td>
+        <td style="font-size:11px;color:var(--ink-soft);">${r.item.cat}</td>
+        <td style="text-align:right;">${r.unitLabel==='pcs' ? r.qty+' pcs' : formatWeight(r.qty)}</td>
+        <td style="text-align:right;">${inventoryUnitCost(r.item).toFixed(3)}${r.unitLabel==='pcs'?'/pc':'/kg'}</td>
+        <td style="text-align:right;font-family:'IBM Plex Mono',monospace;">${r.value.toFixed(3)}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button class="btn ghost btn small" ${hasLastPurchase(r.item)?'':'disabled title="No purchase history to repeat yet"'} onclick="reorderLast('${r.item.id}')">🔁 Reorder</button>
+          <button class="btn ghost btn small" onclick="openAdjustStockModal('${r.item.id}')">Adjust</button>
+        </td>
+      </tr>`).join('')}
+      <tr><td colspan="4" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:700;font-family:'IBM Plex Mono',monospace;">${totalValue.toFixed(3)}</td><td></td></tr>
+    </table>
+  `;
+  wrap.innerHTML = html;
+}
+/* ================= SETTINGS: CATEGORIES & INGREDIENTS ================= */
+// Everything here edits the SAME LIBRARY / CATEGORY_ORDER arrays the whole app reads from —
+// there's no separate copy, so a rename or delete here is instantly reflected in the Builder
+// library, the recipe table, Costing Engine, and Inventory list, all at once.
+function renderIngredientSettingsView(wrap){
+  const catCounts = CATEGORY_ORDER.map(c=>({name:c, count:LIBRARY.filter(i=>i.cat===c).length}));
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <h3 style="font-family:'Inter',sans-serif;font-size:20px;margin:0;">Manage categories &amp; ingredients</h3>
+      <button class="btn ghost btn small" onclick="inventorySubView='list';renderAll();">← Back to inventory</button>
+    </div>
+    <p style="font-size:12px;color:var(--ink-soft);margin:0 0 18px;">Changes here apply everywhere at once — the Builder library, recipe table, Costing Engine, and Inventory all read from this same list.</p>
+
+    <div class="card" style="margin-bottom:22px;">
+      <h4 style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 12px;">Add to the library</h4>
+      <div class="field-row" style="margin-bottom:0;">
+        <div class="field"><label>New category name</label><input type="text" id="newCatOnlyName"></div>
+        <div class="field" style="flex:0;justify-content:flex-end;"><label>&nbsp;</label><button class="btn primary" onclick="addCategoryFromSettings()">+ Add category</button></div>
+      </div>
+      <div style="border-top:1px dotted var(--line);margin:14px 0;"></div>
+      <div class="field-row" style="margin-bottom:0;">
+        <div class="field"><label>New ingredient — category</label><select id="newIngCategoryPick">${CATEGORY_ORDER.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
+        <div class="field" style="flex:0;justify-content:flex-end;"><label>&nbsp;</label><button class="btn primary" onclick="openAddCustomModal(document.getElementById('newIngCategoryPick').value)">+ Add ingredient</button></div>
+      </div>
+      <div id="catSettingsErr" class="err-text" style="margin:10px 0 0;"></div>
+    </div>
+
+    <h4 style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 8px;">Categories</h4>
+    <table class="recipe-table" style="margin-bottom:24px;">
+      <tr><th>Category</th><th style="text-align:right;">Ingredients</th><th></th></tr>
+      ${catCounts.map(c=>`<tr>
+        <td><input type="text" class="supplier-input" id="catName_${safeFileName(c.name)}" value="${c.name}" style="max-width:220px;"></td>
+        <td style="text-align:right;">${c.count}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button class="btn ghost btn small" onclick="renameCategoryFromField('${c.name}')">Rename</button>
+          <button class="btn ghost btn small" ${c.count>0?'disabled title="Move or delete its ingredients first"':''} onclick="deleteCategoryPrompt('${c.name}')">Delete</button>
+        </td>
+      </tr>`).join('')}
+    </table>
+
+    <h4 style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin:0 0 8px;">Ingredients (${LIBRARY.length})</h4>
+    <input type="text" class="searchbox" id="settingsIngSearch" placeholder="Search ingredients…" oninput="renderIngredientSettingsList()" style="max-width:340px;margin-bottom:12px;">
+    <div id="ingredientSettingsList"></div>
+  `;
+  renderIngredientSettingsList();
+}
+function renderIngredientSettingsList(){
+  const container = document.getElementById('ingredientSettingsList');
+  const q = (document.getElementById('settingsIngSearch').value||'').trim().toLowerCase();
+  const items = LIBRARY.filter(i=>!q || i.name.toLowerCase().includes(q) || i.cat.toLowerCase().includes(q))
+    .sort((a,b)=>a.cat.localeCompare(b.cat)||a.name.localeCompare(b.name));
+  container.innerHTML = `
+    <table class="recipe-table">
+      <tr><th>Ingredient</th><th>Category</th><th style="text-align:right;">Cost</th><th></th></tr>
+      ${items.map(i=>`<tr>
+        <td>${i.name}${i.custom?'<span class="custom-tag">CUSTOM</span>':''}</td>
+        <td style="font-size:11px;color:var(--ink-soft);">${i.cat}</td>
+        <td style="text-align:right;font-size:11.5px;">${isPackagingItem(i)?effectiveCostPerUnit(i).toFixed(3)+'/pc':effectiveCostKg(i).toFixed(3)+'/kg'}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button class="btn ghost btn small" onclick="openIngredientEditModal('${i.id}')">✎ Edit</button>
+          <button class="btn ghost btn small" onclick="deleteIngredientPrompt('${i.id}')">✕ Delete</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="4" style="color:var(--ink-soft);font-style:italic;">No matches</td></tr>'}
+    </table>
+  `;
+}
+function renameCategoryFromField(oldName){
+  const input = document.getElementById('catName_'+safeFileName(oldName));
+  const newName = input.value.trim();
+  const errEl = document.getElementById('catSettingsErr'); errEl.textContent='';
+  if(!newName){ errEl.textContent = 'Category name cannot be empty.'; return; }
+  if(newName.toLowerCase()!==oldName.toLowerCase() && CATEGORY_ORDER.some(c=>c.toLowerCase()===newName.toLowerCase())){
+    errEl.textContent = `"${newName}" already exists — pick a different name.`; return;
+  }
+  const idx = CATEGORY_ORDER.indexOf(oldName);
+  if(idx>-1) CATEGORY_ORDER[idx] = newName;
+  LIBRARY.forEach(i=>{ if(i.cat===oldName) i.cat = newName; });
+  renderAll();
+}
+function addCategoryFromSettings(){
+  const name = document.getElementById('newCatOnlyName').value.trim();
+  const errEl = document.getElementById('catSettingsErr'); errEl.textContent='';
+  if(!name){ errEl.textContent = 'Enter a category name.'; return; }
+  if(CATEGORY_ORDER.some(c=>c.toLowerCase()===name.toLowerCase())){ errEl.textContent = `"${name}" already exists.`; return; }
+  CATEGORY_ORDER.push(name);
+  renderAll();
+}
+function deleteCategoryPrompt(name){
+  const count = LIBRARY.filter(i=>i.cat===name).length;
+  if(count>0){ document.getElementById('catSettingsErr').textContent = `Can't delete "${name}" — it still has ${count} ingredient${count!==1?'s':''}. Move or delete them first.`; return; }
+  const idx = CATEGORY_ORDER.indexOf(name);
+  if(idx>-1) CATEGORY_ORDER.splice(idx,1);
+  renderAll();
+}
+function deleteIngredientPrompt(id){
+  const item = getItem(id); if(!item) return;
+  const inDraft = recipe.some(r=>r.id===id);
+  let versionCount = 0;
+  projects.forEach(p=>p.versions.forEach(v=>{ if(v.snapshot.items.some(i=>i.id===id)) versionCount++; }));
+  const stockQty = getInventoryQty(id);
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Delete "${item.name}"?</h3>
+    <div class="warn-box">
+      ${inDraft?'⚠ Currently used in the recipe you\'re building — it will be removed from it.<br>':''}
+      ${versionCount>0?`⚠ Referenced in ${versionCount} saved recipe version${versionCount!==1?'s':''} — those will show it as missing.<br>`:''}
+      ${stockQty>0?`⚠ Has ${item.costUnit==='piece'||item.costUnit==='unit'||item.costUnit==='roll'?stockQty+' pcs':formatWeight(stockQty)} of stock recorded — this will be discarded.<br>`:''}
+      ${!inDraft && versionCount===0 && stockQty<=0 ? 'Not currently used anywhere — safe to delete.' : 'This can\'t be undone.'}
+    </div>
+    <div class="btn-row" style="display:flex;gap:8px;">
+      <button class="btn primary" style="background:var(--warn);border-color:var(--warn);" onclick="confirmDeleteIngredient('${id}')">Delete anyway</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function confirmDeleteIngredient(id){
+  recipe = recipe.filter(r=>r.id!==id);
+  delete costOverrides[id];
+  delete inventory[id];
+  const idx = LIBRARY.findIndex(i=>i.id===id);
+  if(idx>-1) LIBRARY.splice(idx,1);
+  closeModal();
+  renderAll();
+}
+
+function hasLastPurchase(item){
+  if(item.costUnit==='piece') return (item.bulkPieces||0)>0;
+  if(item.costUnit==='unit') return (item.bulkUnitQty||0)>0;
+  if(item.costUnit==='roll') return (item.rollLengthM||0)>0 && (item.wrapLengthCmPerUnit||0)>0;
+  return (item.bulkQty||0)>0;
+}
+function reorderLast(id){
+  const item = getItem(id); if(!item || !hasLastPurchase(item)) return;
+  let qty=0, note='';
+  if(item.costUnit==='piece'){ qty=item.bulkPieces||0; note=`Reorder: ${qty} pcs for ${item.bulkCost||0} ${item.bulkCurrency||'KWD'} (repeat of last purchase)`; }
+  else if(item.costUnit==='unit'){ qty=item.bulkUnitQty||0; note=`Reorder: ${qty} units for ${item.bulkCost||0} ${item.bulkCurrency||'KWD'} (repeat of last purchase)`; }
+  else if(item.costUnit==='roll'){ const perRoll=Math.floor((item.rollLengthM*100)/item.wrapLengthCmPerUnit); qty=perRoll; note=`Reorder: 1 roll (~${perRoll} packs) for ${item.costPerRoll||0} ${item.bulkCurrency||'KWD'} (repeat of last purchase)`; }
+  else { const qtyKg = item.bulkUnit==='g' ? (item.bulkQty||0)/1000 : (item.bulkQty||0); qty=qtyKg*1000; note=`Reorder: ${item.bulkQty}${item.bulkUnit} for ${item.bulkCost||0} ${item.bulkCurrency||'KWD'} (repeat of last purchase)`; }
+  if(qty<=0) return;
+  addInventoryStock(id, qty, note);
+  renderAll();
+}
+function openAdjustStockModal(id){
+  const item = getItem(id); const unitLabel = inventoryUnitLabel(item);
+  const inv = ensureInventory(id);
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Adjust stock — ${item.name}</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">Current: ${unitLabel==='pcs'?inv.qty+' pcs':formatWeight(inv.qty)}</p>
+    <div class="field-row">
+      <div class="field"><label>Adjustment (${unitLabel==='pcs'?'pcs, +/-':'grams, +/-'})</label><input type="number" id="adjQty" value="0" step="1"></div>
+      <div class="field"><label>Reason</label><input type="text" id="adjNote" placeholder="e.g. stock count correction, spoilage"></div>
+    </div>
+    <div class="btn-row" style="display:flex;gap:8px;"><button class="btn primary" onclick="confirmAdjustStock('${id}')">Apply</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+    <h3 style="margin-top:20px;">History</h3>
+    <div style="max-height:160px;overflow:auto;font-size:11px;color:var(--ink-soft);">
+      ${inv.history.slice().reverse().map(h=>`<div style="padding:4px 0;border-bottom:1px dotted var(--line);">${new Date(h.date).toLocaleDateString()} — <b style="color:${h.type==='received'?'var(--mint)':h.type==='consumed'?'var(--warn)':'var(--frost)'};">${h.type}</b> ${h.qty} ${unitLabel==='pcs'?'pcs':'g'}${h.note?' — '+h.note:''}</div>`).join('') || '<i>No history yet</i>'}
+    </div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function confirmAdjustStock(id){
+  const delta = parseFloat(document.getElementById('adjQty').value)||0;
+  const note = document.getElementById('adjNote').value.trim()||'Manual adjustment';
+  if(delta>0) addInventoryStock(id, delta, note);
+  else if(delta<0) consumeInventoryStock(id, -delta, note);
+  closeModal(); renderAll();
+}
+/* ================= INVOICE SCANNING (live vision API) =================
+   Uploads a photo of a supplier invoice/delivery note, sends it to Claude
+   with vision to extract line items, then shows an editable review table
+   before anything touches inventory — OCR/extraction is never trusted
+   blindly. Same no-key-needed pattern as the nutrition search: works
+   inside the Claude artifact, fails gracefully (clear error, no crash,
+   no silent fallback since there's no way to "guess" an invoice locally) elsewhere.
+================================================================= */
+function openInvoiceScanModal(){
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Scan supplier invoice</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">Upload a photo of an invoice or delivery note. Claude reads it and extracts line items — you review and match them before anything is added to inventory.</p>
+    <div class="field"><input type="file" id="invoiceFile" accept="image/*" onchange="handleInvoiceFile(event)"></div>
+    <div id="invoiceStatus" style="font-size:12px;color:var(--ink-soft);margin:10px 0;"></div>
+    <div id="invoiceReviewArea"></div>
+    <div class="btn-row" style="margin-top:14px;"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function handleInvoiceFile(event){
+  const file = event.target.files[0]; if(!file) return;
+  const statusEl = document.getElementById('invoiceStatus');
+  statusEl.style.color = 'var(--ink-soft)';
+  statusEl.textContent = 'Reading invoice…';
+  try{
+    const base64Data = await fileToBase64(file);
+    const prompt = `This image is a supplier invoice or delivery note for food/baking ingredients. Extract every line item you can clearly read. Return ONLY a JSON array, no prose, no markdown fences, in exactly this shape:
+[{"name":"item name as written on the invoice","qty":number,"unit":"kg or g or pcs","cost":number}]
+Ignore currency symbols — cost is just the numeric total paid for that line. Skip any line where quantity or cost isn't clearly legible rather than guessing.`;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:1000,
+        messages:[{role:"user", content:[
+          {type:"image", source:{type:"base64", media_type:file.type||"image/jpeg", data:base64Data}},
+          {type:"text", text:prompt},
+        ]}],
+      }),
+    });
+    if(!response.ok) throw new Error(`API returned ${response.status}`);
+    const data = await response.json();
+    const textBlocks = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text);
+    const raw = textBlocks.join("\n");
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const jsonMatch = clean.match(/\[[\s\S]*\]/);
+    if(!jsonMatch) throw new Error("Could not find a line-item list in the response");
+    const items = JSON.parse(jsonMatch[0]);
+    if(!Array.isArray(items) || items.length===0) throw new Error("No line items were extracted");
+    statusEl.style.color = 'var(--mint)';
+    statusEl.textContent = `✓ Extracted ${items.length} line item${items.length!==1?'s':''} — review and match below before importing.`;
+    renderInvoiceReview(items);
+  } catch(err){
+    statusEl.style.color = 'var(--warn)';
+    statusEl.innerHTML = `⚠ Couldn't scan this invoice (${err.message}). Live invoice scanning needs to run inside the Claude artifact — if you're testing this outside that context, that's expected. You can still add stock manually from the Inventory or Builder tabs.`;
+  }
+}
+function guessLibraryMatch(invoiceName){
+  const words = String(invoiceName||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2);
+  let best=null, bestScore=0;
+  LIBRARY.forEach(item=>{
+    const itemWords = item.name.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2);
+    const score = words.filter(w=>itemWords.includes(w)).length;
+    if(score>bestScore){ bestScore=score; best=item; }
+  });
+  return bestScore>0 ? best : null;
+}
+function renderInvoiceReview(items){
+  const area = document.getElementById('invoiceReviewArea');
+  const options = LIBRARY.map(i=>`<option value="${i.id}">${i.name} (${i.cat})</option>`).join('');
+  area.innerHTML = `
+    <table class="recipe-table" style="margin-top:10px;">
+      <tr><th>On invoice</th><th>Qty</th><th>Unit</th><th>Cost</th><th>Match to ingredient</th></tr>
+      ${items.map((it,idx)=>`<tr>
+          <td>${it.name||''}</td>
+          <td style="text-align:right;"><input type="number" class="gram-input" id="invQty${idx}" value="${it.qty||0}" step="0.01"></td>
+          <td><select id="invUnit${idx}"><option value="kg" ${it.unit==='kg'?'selected':''}>kg</option><option value="g" ${it.unit==='g'?'selected':''}>g</option><option value="pcs" ${it.unit==='pcs'?'selected':''}>pcs</option></select></td>
+          <td style="text-align:right;"><input type="number" class="gram-input" id="invCost${idx}" value="${it.cost||0}" step="0.001"></td>
+          <td><select id="invMatch${idx}"><option value="">— Skip —</option>${options}</select></td>
+        </tr>`).join('')}
+    </table>
+    <div class="btn-row" style="margin-top:12px;"><button class="btn primary" onclick="confirmInvoiceImport(${items.length})">Add matched rows to inventory</button></div>
+    <div id="invoiceImportResult" style="font-size:12px;color:var(--mint);margin-top:8px;"></div>
+  `;
+  items.forEach((it,idx)=>{
+    const guess = guessLibraryMatch(it.name);
+    if(guess) document.getElementById(`invMatch${idx}`).value = guess.id;
+  });
+}
+function confirmInvoiceImport(count){
+  let added = 0, skipped = 0;
+  for(let idx=0; idx<count; idx++){
+    const matchId = document.getElementById(`invMatch${idx}`).value;
+    if(!matchId){ skipped++; continue; }
+    const item = getItem(matchId); if(!item){ skipped++; continue; }
+    const qty = parseFloat(document.getElementById(`invQty${idx}`).value)||0;
+    const unit = document.getElementById(`invUnit${idx}`).value;
+    const cost = parseFloat(document.getElementById(`invCost${idx}`).value)||0;
+    if(qty<=0){ skipped++; continue; }
+    let stockQty = qty;
+    if(item.costUnit!=='piece' && item.costUnit!=='unit' && item.costUnit!=='roll' && unit==='kg') stockQty = qty*1000;
+    addInventoryStock(matchId, stockQty, `Scanned from invoice: ${qty}${unit} for ${cost}`);
+    // also refresh cost basis so the invoice's price becomes the new raw cost, same as any bulk purchase entry
+    if(item.costUnit!=='piece' && item.costUnit!=='unit' && item.costUnit!=='roll'){
+      const qtyKg = unit==='g' ? qty/1000 : qty;
+      if(qtyKg>0){ costOverrides[matchId] = cost/qtyKg; item.bulkQty=qty; item.bulkUnit=unit; item.bulkCost=cost; }
+    }
+    added++;
+  }
+  document.getElementById('invoiceImportResult').textContent = `Added ${added} item${added!==1?'s':''} to inventory${skipped?`, skipped ${skipped}`:''}.`;
+  renderAll();
+}
+
+/* ================= CSV GOODS-RECEIVED IMPORT ================= */
+// Log an entire delivery in one file instead of one ingredient at a time.
+// Columns: Ingredient, Quantity, Unit (kg/g/pcs), Cost, Supplier. Matches by
+// name against the existing library — unmatched rows are reported, never
+// silently guessed into a new ingredient with no nutrition data.
+function parseCSVSimple(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  return lines.map(line=>{
+    const cells = []; let field=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c = line[i];
+      if(inQ){ if(c==='"'){ if(line[i+1]==='"'){field+='"';i++;} else inQ=false; } else field+=c; }
+      else { if(c==='"') inQ=true; else if(c===','){cells.push(field);field='';} else field+=c; }
+    }
+    cells.push(field);
+    return cells.map(c=>c.trim());
+  });
+}
+function openGoodsReceivedCSVModal(){
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Import goods received (CSV)</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">Log a whole delivery at once. Columns: <b>Ingredient, Quantity, Unit, Cost, Supplier</b> — Unit is kg, g, or pcs. Matches ingredients by name; unmatched rows are reported, not guessed.</p>
+    <div class="field"><input type="file" id="grnFile" accept=".csv" onchange="handleGoodsReceivedCSV(event)"></div>
+    <div id="grnResult" style="font-size:12px;color:var(--ink-soft);margin:10px 0;"></div>
+    <button class="btn ghost btn small" onclick="downloadGoodsReceivedTemplate()">Download blank template</button>
+    <div class="btn-row" style="margin-top:14px;"><button class="btn ghost" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function downloadGoodsReceivedTemplate(){
+  const csv = 'Ingredient,Quantity,Unit,Cost,Supplier\nAll-Purpose Flour,50,kg,4.5,Americana\nWhole Eggs (fresh, ~50g each),360,pcs,16.5,Local Market Supplier\n';
+  downloadBlob(csv, 'text/csv', 'goods-received-template.csv');
+}
+function handleGoodsReceivedCSV(event){
+  const file = event.target.files[0]; if(!file) return;
+  const resultEl = document.getElementById('grnResult');
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const rows = parseCSVSimple(ev.target.result);
+      const header = rows[0].map(h=>h.toLowerCase());
+      const idx = {name:header.indexOf('ingredient'), qty:header.indexOf('quantity'), unit:header.indexOf('unit'), cost:header.indexOf('cost'), supplier:header.indexOf('supplier')};
+      if(idx.name<0 || idx.qty<0){ resultEl.style.color='var(--warn)'; resultEl.textContent='CSV needs at least "Ingredient" and "Quantity" columns.'; return; }
+      let received=0, unmatched=[];
+      rows.slice(1).forEach(row=>{
+        if(!row[idx.name]) return;
+        const name = row[idx.name].trim();
+        const qty = parseFloat(row[idx.qty])||0;
+        const unit = (idx.unit>=0?row[idx.unit]:'kg').trim().toLowerCase()||'kg';
+        const cost = idx.cost>=0 ? parseFloat(row[idx.cost])||0 : 0;
+        const supplier = idx.supplier>=0 ? row[idx.supplier].trim() : '';
+        if(qty<=0) return;
+        const item = LIBRARY.find(i=>i.name.toLowerCase()===name.toLowerCase());
+        if(!item){ unmatched.push(name); return; }
+        const isPiece = item.costUnit==='piece'||item.costUnit==='unit'||item.costUnit==='roll';
+        const stockQty = isPiece ? qty : (unit==='g'?qty:qty*1000);
+        addInventoryStock(item.id, stockQty, `Goods received: ${qty}${unit} for ${cost}${supplier?' — '+supplier:''}`);
+        if(!isPiece && cost>0){ const qtyKg = unit==='g'?qty/1000:qty; if(qtyKg>0) costOverrides[item.id] = cost/qtyKg; }
+        received++;
+      });
+      resultEl.style.color = unmatched.length ? 'var(--apricot)' : 'var(--mint)';
+      resultEl.innerHTML = `Received ${received} line${received!==1?'s':''}.${unmatched.length?` Not matched (no stock added): ${unmatched.join(', ')}`:''}`;
+      renderAll();
+    }catch(e){ resultEl.style.color='var(--warn)'; resultEl.textContent='Could not read file: '+e.message; }
+  };
+  reader.readAsText(file);
+}
+
+/* ================= MANUAL ADD STOCK — BY CATEGORY ================= */
+// A direct entry point in the Inventory tab itself: pick a category, then an
+// ingredient within it, then quantity/cost — rather than having to go find
+// that ingredient in the Builder library first.
+function openAddStockManualModal(){
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <h3>Add stock — manual entry</h3>
+    <div class="field-row">
+      <div class="field"><label>Category</label><select id="asCategory" onchange="refreshAddStockIngredientOptions()">${CATEGORY_ORDER.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>...or type a new category</label>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="asNewCatName" placeholder="e.g. Fillings" oninput="onAddStockNewCatInput()" style="flex:1;">
+          <button class="btn ghost btn small" id="asCatOnlyBtn" onclick="confirmAddCategoryOnly()" disabled>Just add category</button>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field" id="asIngWrap"><label>Ingredient</label><select id="asIngredient" onchange="onAddStockIngredientChange()"></select></div>
+      <div class="field"><label>...or type a new ingredient</label><input type="text" id="asNewIngName" placeholder="e.g. Dulce de Leche" oninput="onAddStockIngredientChange()"></div>
+    </div>
+    <p id="asNewIngNote" style="display:none;font-size:10.5px;color:var(--ink-soft);margin:-8px 0 12px;">New ingredient — nutrition defaults to 0, edit later via the ✎ icon in the Builder library. The quantity/cost below becomes its starting price.</p>
+    <div class="field-row">
+      <div class="field"><label>Quantity</label><input type="number" id="asQty" value="1" min="0.001" step="0.001"></div>
+      <div class="field"><label>Unit</label><select id="asUnit"><option value="kg">kg</option><option value="g">g</option><option value="pcs">pcs</option></select></div>
+      <div class="field"><label>Cost paid (optional)</label><input type="number" id="asCost" value="0" min="0" step="0.001"></div>
+    </div>
+    <div class="field"><label>Supplier (optional)</label><input type="text" list="supplierOptions" id="asSupplier"></div>
+    <div id="asErr" class="err-text"></div>
+    <div class="btn-row" style="display:flex;gap:8px;"><button class="btn primary" onclick="confirmAddStockManual()">Add to inventory</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+  `;
+  refreshAddStockIngredientOptions();
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+// Typing a new category name disables the existing-category dropdown (they're mutually exclusive)
+// and immediately switches the ingredient side into "new ingredient" mode too, since a brand-new
+// category can't have any existing ingredients to pick from.
+function onAddStockNewCatInput(){
+  const hasNewCat = document.getElementById('asNewCatName').value.trim().length>0;
+  document.getElementById('asCategory').disabled = hasNewCat;
+  document.getElementById('asCatOnlyBtn').disabled = !hasNewCat;
+  // A new category doesn't force a new ingredient too — you can add the category alone,
+  // or still add an ingredient/stock in the same step if you want to. Not coupled.
+  if(!hasNewCat) refreshAddStockIngredientOptions();
+  else document.getElementById('asIngWrap').style.display = 'none'; // no existing category selected to list from, but typing an ingredient name is still available below
+}
+function confirmAddCategoryOnly(){
+  const newCatName = document.getElementById('asNewCatName').value.trim();
+  if(!newCatName){ document.getElementById('asErr').textContent = 'Enter a name for the new category.'; return; }
+  const existing = CATEGORY_ORDER.find(c=>c.toLowerCase()===newCatName.toLowerCase());
+  if(existing){ document.getElementById('asErr').textContent = `"${existing}" already exists.`; return; }
+  CATEGORY_ORDER.push(newCatName);
+  closeModal();
+  renderAll();
+}
+function refreshAddStockIngredientOptions(){
+  document.getElementById('asIngWrap').style.display = 'flex';
+  const cat = document.getElementById('asCategory').value;
+  const items = LIBRARY.filter(i=>i.cat===cat).sort((a,b)=>a.name.localeCompare(b.name));
+  const sel = document.getElementById('asIngredient');
+  sel.innerHTML = items.length ? items.map(i=>`<option value="${i.id}">${i.name}</option>`).join('') : '<option value="">— none yet, type a new one on the right —</option>';
+  document.getElementById('asNewIngName').value = '';
+  onAddStockIngredientChange();
+}
+// Typing into "new ingredient" disables the dropdown — it's a plain either/or, no nested option to find.
+function onAddStockIngredientChange(){
+  const hasNewIng = document.getElementById('asNewIngName').value.trim().length>0;
+  const sel = document.getElementById('asIngredient');
+  sel.disabled = hasNewIng;
+  document.getElementById('asNewIngNote').style.display = hasNewIng ? 'block' : 'none';
+  if(!hasNewIng && sel.value){
+    const chosen = getItem(sel.value);
+    const unitSel = document.getElementById('asUnit');
+    if(chosen && (chosen.costUnit==='piece'||chosen.costUnit==='unit'||chosen.costUnit==='roll')) unitSel.value = 'pcs';
+  }
+}
+function confirmAddStockManual(){
+  const newCatName = document.getElementById('asNewCatName').value.trim();
+  const newIngName = document.getElementById('asNewIngName').value.trim();
+  const catSelVal = document.getElementById('asCategory').value;
+  const ingSelVal = document.getElementById('asIngredient').value;
+  const qty = parseFloat(document.getElementById('asQty').value)||0;
+  const unit = document.getElementById('asUnit').value;
+  const cost = parseFloat(document.getElementById('asCost').value)||0;
+  const supplier = document.getElementById('asSupplier').value.trim();
+  if(qty<=0){ document.getElementById('asErr').textContent = 'Enter a quantity greater than 0.'; return; }
+
+  let category = catSelVal;
+  if(newCatName){
+    const existing = CATEGORY_ORDER.find(c=>c.toLowerCase()===newCatName.toLowerCase());
+    category = existing || newCatName;
+    if(!existing) CATEGORY_ORDER.push(newCatName);
+  }
+
+  let id;
+  if(newIngName){
+    if(LIBRARY.some(i=>i.name.toLowerCase()===newIngName.toLowerCase())){ document.getElementById('asErr').textContent = 'An ingredient with that name already exists — clear the new-ingredient field and pick it from the dropdown instead.'; return; }
+    id = 'custom_'+newIngName.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Math.floor(Math.random()*999);
+    const isPieceUnit = unit==='pcs';
+    const newItem = {
+      id, name:newIngName, cat:category, custom:true, vegan:true, allergens:[],
+      kcal:0, fat:0, satFat:0, sugar:0, protein:0, carbs:0,
+      note:'Added via Inventory quick-entry — nutrition defaults to 0, edit via ✎ if needed.',
+    };
+    if(isPieceUnit){
+      newItem.costUnit = 'unit';
+      newItem.costPerUnit = qty>0 ? cost/qty : 0;
+      newItem.bulkUnitQty = qty; newItem.bulkCost = cost; newItem.bulkCurrency = 'KWD';
+    } else {
+      const qtyKg = unit==='g'?qty/1000:qty;
+      newItem.costKg = qtyKg>0 ? cost/qtyKg : 0;
+      newItem.bulkQty = qty; newItem.bulkUnit = unit; newItem.bulkCost = cost; newItem.bulkCurrency = 'KWD';
+    }
+    LIBRARY.push(newItem);
+  } else {
+    if(!ingSelVal){ document.getElementById('asErr').textContent = 'Pick an ingredient, or type a new one on the right.'; return; }
+    id = ingSelVal;
+  }
+
+  const item = getItem(id);
+  const isPiece = item.costUnit==='piece'||item.costUnit==='unit'||item.costUnit==='roll';
+  const stockQty = isPiece ? qty : (unit==='g'?qty:qty*1000);
+  addInventoryStock(id, stockQty, `Manual entry: ${qty}${unit==='pcs'?' pcs':unit}${cost>0?' for '+cost:''}${supplier?' — '+supplier:''}`);
+  if(!newIngName && !isPiece && cost>0){ const qtyKg = unit==='g'?qty/1000:qty; if(qtyKg>0) costOverrides[id] = cost/qtyKg; }
+  closeModal(); renderAll();
+}
+
+function openDeductRecipeModal(){
+  if(recipe.length===0){ return; }
+  const body = document.getElementById('modalBody');
+  const lines = recipe.map(r=>{
+    const item = getItem(r.id); if(!item) return null;
+    const have = getInventoryQty(r.id);
+    const short = have<r.g;
+    return {item, need:r.g, have, short};
+  }).filter(Boolean);
+  body.innerHTML = `
+    <h3>Log production — deduct from stock</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">Deducts every ingredient in the current recipe from inventory, as if you just produced this batch.</p>
+    <table class="recipe-table" style="margin-bottom:12px;">
+      <tr><th>Ingredient</th><th style="text-align:right;">Needed</th><th style="text-align:right;">In stock</th><th></th></tr>
+      ${lines.map(l=>`<tr><td>${l.item.name}</td><td style="text-align:right;">${isPackagingItem(l.item)?l.need+' pcs':formatWeight(l.need)}</td><td style="text-align:right;">${isPackagingItem(l.item)?l.have+' pcs':formatWeight(l.have)}</td><td>${l.short?'<span class="allergen-flag">⚠ short</span>':''}</td></tr>`).join('')}
+    </table>
+    ${lines.some(l=>l.short)?'<div class="warn-box">Some ingredients don\'t have enough recorded stock — deducting will floor them at 0 rather than go negative.</div>':''}
+    <div class="btn-row" style="display:flex;gap:8px;"><button class="btn primary" onclick="confirmDeductRecipe()">Confirm — deduct from stock</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+  `;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function confirmDeductRecipe(){
+  const name = document.getElementById('recipeName').value;
+  recipe.forEach(r=>{ consumeInventoryStock(r.id, r.g, `Produced batch: ${name}`); });
+  closeModal(); renderAll();
+}
+
+/* ================= MASTER RENDER ================= */
+function renderAll(){
+  renderTabbar();
+  if(activeTab==='builder'){ renderLibrary(); renderRecipeTable(); renderPreview(); }
+  else if(activeTab==='costing'){ renderCostingEngine(); }
+  else if(activeTab==='inventory'){ renderInventoryView(); }
+  else { renderTestingView(); }
+}
+document.getElementById('unitWeightG').addEventListener('input', renderAll);
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.dot-menu-wrap') && openDotMenuId){ openDotMenuId=null; if(activeTab==='testing') renderTestingView(); }
+});
+loadTemplate('banana_cake');
+</script>
+</body>
+</html>

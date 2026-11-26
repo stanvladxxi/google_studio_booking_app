@@ -18,16 +18,22 @@ import {
   StaffMember,
   StaffRole,
   StaffShift,
+  USER_ROLE_LABELS,
+  UserProfile,
+  UserRole,
   clampStr,
   sanitizeId,
 } from '../types';
 import { seedFacilityCatalogIfEmpty } from '../data/seedCatalog';
 import { buildLogFileContent, downloadTextFile } from '../utils/logExporter';
+import { BOOTSTRAPPED_ADMIN_EMAIL } from '../firebase';
 
 interface AdminConsoleViewProps {
   uid: string;
   userName: string;
   isAdmin: boolean;
+  mode?: 'full' | 'lite';
+  users?: UserProfile[];
   spaces: KitchenSpace[];
   equipment: KitchenEquipment[];
   bookings: Booking[];
@@ -39,12 +45,23 @@ interface AdminConsoleViewProps {
   onNotify: (msg: string, type?: 'success' | 'error') => void;
 }
 
-type AdminTab = 'overview' | 'spaces' | 'equipment' | 'staff';
+type AdminTab = 'overview' | 'users' | 'spaces' | 'equipment' | 'staff';
+
+const ALL_ROLES: UserRole[] = [
+  'member',
+  'recipe_dev',
+  'kitchen_manager',
+  'kitchen_worker',
+  'aggregator',
+  'admin',
+];
 
 export function AdminConsoleView({
   uid,
   userName,
   isAdmin,
+  mode = 'full',
+  users = [],
   spaces,
   equipment,
   bookings,
@@ -55,9 +72,11 @@ export function AdminConsoleView({
   logs,
   onNotify,
 }: AdminConsoleViewProps) {
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const isLite = mode === 'lite';
+  const [activeTab, setActiveTab] = useState<AdminTab>(isLite ? 'spaces' : 'overview');
   const [seeding, setSeeding] = useState(false);
   const [promotingQueueId, setPromotingQueueId] = useState<string | null>(null);
+  const [updatingRoleUid, setUpdatingRoleUid] = useState<string | null>(null);
 
   // Add Space form
   const [spaceName, setSpaceName] = useState('');
@@ -80,6 +99,7 @@ export function AdminConsoleView({
   const [staffRole, setStaffRole] = useState<StaffRole>('Sous Chef');
   const [staffStation, setStaffStation] = useState('Hot Line & Convection Bay');
   const [staffShift, setStaffShift] = useState<StaffShift>('Morning');
+  const [staffLinkedUid, setStaffLinkedUid] = useState('');
 
   const kpis = useMemo(() => {
     const activeBookings = bookings.filter(
@@ -112,6 +132,45 @@ export function AdminConsoleView({
       );
     } finally {
       setSeeding(false);
+    }
+  };
+
+  const handleAssignUserRole = async (targetUser: UserProfile, nextRole: UserRole) => {
+    if (!isAdmin || isLite) return;
+    if (targetUser.role === nextRole) return;
+    setUpdatingRoleUid(targetUser.uid);
+    const logId = `log_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const now = serverTimestamp();
+
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'users', targetUser.uid), {
+        role: nextRole,
+        updatedAt: now,
+      });
+      batch.set(doc(db, 'logs', logId), {
+        ownerId: uid,
+        actorName: clampStr(userName || 'Facility Admin', LIMITS.NAME_MAX),
+        eventType: 'duty',
+        severity: 'info',
+        station: 'Access Control',
+        tempReadingC: '',
+        message: clampStr(
+          `Admin updated role for ${targetUser.displayName} (${targetUser.email}) to ${USER_ROLE_LABELS[nextRole]} (${nextRole}).`,
+          LIMITS.LOG_MSG_MAX
+        ),
+        bookingId: '',
+        createdAt: now,
+      });
+      await batch.commit();
+      onNotify(
+        `Assigned ${USER_ROLE_LABELS[nextRole]} role to ${targetUser.displayName}.`,
+        'success'
+      );
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${targetUser.uid}`);
+    } finally {
+      setUpdatingRoleUid(null);
     }
   };
 
@@ -369,13 +428,14 @@ export function AdminConsoleView({
         role: staffRole,
         station: clampStr(staffStation, 80),
         shift: staffShift,
-        linkedUid: '',
+        linkedUid: clampStr(staffLinkedUid, 128),
         isActive: true,
         createdAt: now,
         updatedAt: now,
       });
       setStaffCode('');
       setStaffName('');
+      setStaffLinkedUid('');
       onNotify(`Added ${cleanName} (${staffRole}) to staff roster.`, 'success');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, `staff/${id}`);
@@ -401,37 +461,48 @@ export function AdminConsoleView({
     onNotify(`Downloaded master log file (${logs.length} entries).`, 'success');
   };
 
-  if (!isAdmin) {
+  if (!isAdmin && !isLite) {
     return (
       <div className="bg-white border border-slate-200 rounded-lg p-10 text-center space-y-3">
         <ShieldCheck className="w-8 h-8 text-slate-400 mx-auto" />
         <h2 className="text-lg font-semibold text-slate-900">Facility Admin Access Required</h2>
         <p className="text-sm text-slate-600 max-w-md mx-auto">
-          Catalog pricing, all-member reservation overrides, and staff roster management are restricted to verified facility administrators.
+          Catalog pricing, all-member reservation overrides, and user role management are restricted to verified facility administrators.
         </p>
       </div>
     );
   }
+
+  const visibleTabs = (
+    isLite
+      ? [
+          { id: 'spaces' as const, label: 'Kitchen Spaces' },
+          { id: 'equipment' as const, label: 'Equipment Catalog' },
+          { id: 'staff' as const, label: 'Staff Roster' },
+        ]
+      : [
+          { id: 'overview' as const, label: 'Bookings & Overview' },
+          { id: 'users' as const, label: `User Roles (${users.length})` },
+          { id: 'spaces' as const, label: 'Kitchen Spaces' },
+          { id: 'equipment' as const, label: 'Equipment Catalog' },
+          { id: 'staff' as const, label: 'Staff Roster' },
+        ]
+  );
+
+  const safeTab = visibleTabs.some((t) => t.id === activeTab) ? activeTab : visibleTabs[0].id;
 
   return (
     <div className="space-y-8">
       {/* Admin Header & Sub-navigation */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg self-start overflow-x-auto">
-          {(
-            [
-              { id: 'overview', label: 'Bookings & Overview' },
-              { id: 'spaces', label: 'Kitchen Spaces' },
-              { id: 'equipment', label: 'Equipment Catalog' },
-              { id: 'staff', label: 'Staff Roster' },
-            ] as const
-          ).map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
-                activeTab === tab.id
+                safeTab === tab.id
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
@@ -442,15 +513,17 @@ export function AdminConsoleView({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleSeedDefaults}
-            disabled={seeding}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 whitespace-nowrap"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${seeding ? 'animate-spin' : ''}`} />
-            Sync Default Catalog
-          </button>
+          {!isLite && (
+            <button
+              type="button"
+              onClick={handleSeedDefaults}
+              disabled={seeding}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 whitespace-nowrap"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${seeding ? 'animate-spin' : ''}`} />
+              Sync Default Catalog
+            </button>
+          )}
           <button
             type="button"
             onClick={handleDownloadMasterLog}
@@ -463,35 +536,37 @@ export function AdminConsoleView({
       </div>
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-xs text-slate-500">Active Reservations</div>
-          <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-slate-900">
-            {kpis.activeCount}
+      {!isLite && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="text-xs text-slate-500">Active Reservations</div>
+            <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-slate-900">
+              {kpis.activeCount}
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="text-xs text-slate-500">Booked Kitchen Hours</div>
+            <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-slate-900">
+              {kpis.totalBookedHours}h
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="text-xs text-slate-500">Gross Booking Value</div>
+            <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-teal-800">
+              ${kpis.totalRevenue.toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="text-xs text-slate-500">Open Staff Duties</div>
+            <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-slate-900">
+              {kpis.openDuties}
+            </div>
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-xs text-slate-500">Booked Kitchen Hours</div>
-          <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-slate-900">
-            {kpis.totalBookedHours}h
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-xs text-slate-500">Gross Booking Value</div>
-          <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-teal-800">
-            ${kpis.totalRevenue.toFixed(2)}
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-xs text-slate-500">Open Staff Duties</div>
-          <div className="mt-1 text-2xl font-mono tabular-nums font-bold text-slate-900">
-            {kpis.openDuties}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Tab 1: All Bookings & Waitlist Queue */}
-      {activeTab === 'overview' && (
+      {safeTab === 'overview' && !isLite && (
         <div className="space-y-8">
           {waitingQueue.length > 0 && (
             <section className="space-y-3">
@@ -650,8 +725,82 @@ export function AdminConsoleView({
         </div>
       )}
 
+      {/* Tab: User Roles Assignment */}
+      {safeTab === 'users' && isAdmin && !isLite && (
+        <div className="space-y-6">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-2">
+            <h2 className="text-lg font-semibold text-slate-900">User Role Management</h2>
+            <p className="text-sm text-slate-600">
+              Assign operational roles stored in <span className="font-mono text-xs">users/&#123;uid&#125;.role</span>. Roles enforce navigation, route guards, data scoping, and Firestore security rules.
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 text-xs font-semibold text-slate-600 bg-slate-50">
+                  <th className="py-3 px-4">User</th>
+                  <th className="py-3 px-4">UID</th>
+                  <th className="py-3 px-4 text-right">Loyalty · Hours</th>
+                  <th className="py-3 px-4">Current Role</th>
+                  <th className="py-3 px-4 text-right">Assign Role</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-sm">
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 px-4 text-center text-xs text-slate-500">
+                      No user profiles found yet.
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((u) => {
+                    const isBootstrappedOwner = u.email === BOOTSTRAPPED_ADMIN_EMAIL;
+                    return (
+                      <tr key={u.uid} className="hover:bg-slate-50/70">
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-slate-900">{u.displayName}</div>
+                          <div className="text-xs text-slate-500">{u.email}</div>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs text-slate-500">{u.uid}</td>
+                        <td className="py-3 px-4 text-right font-mono tabular-nums text-xs text-slate-700 whitespace-nowrap">
+                          {u.loyaltyPoints} pts · {u.totalHoursBooked}h
+                        </td>
+                        <td className="py-3 px-4 text-xs font-semibold text-slate-800 whitespace-nowrap">
+                          {USER_ROLE_LABELS[u.role] || u.role}
+                          {isBootstrappedOwner && (
+                            <span className="ml-2 font-mono text-[11px] font-medium text-teal-800">
+                              (Bootstrapped Admin)
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <select
+                            aria-label={`Role for ${u.displayName}`}
+                            value={u.role}
+                            disabled={updatingRoleUid === u.uid}
+                            onChange={(e) => handleAssignUserRole(u, e.target.value as UserRole)}
+                            className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-700"
+                          >
+                            {ALL_ROLES.map((roleOpt) => (
+                              <option key={roleOpt} value={roleOpt}>
+                                {USER_ROLE_LABELS[roleOpt]} ({roleOpt})
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Tab 2: Manage Kitchen Spaces */}
-      {activeTab === 'spaces' && (
+      {safeTab === 'spaces' && (
         <div className="space-y-6">
           <form onSubmit={handleCreateSpace} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
             <h3 className="text-base font-semibold text-slate-900">Add Commercial Kitchen Space</h3>
@@ -779,7 +928,7 @@ export function AdminConsoleView({
       )}
 
       {/* Tab 3: Equipment Catalog */}
-      {activeTab === 'equipment' && (
+      {safeTab === 'equipment' && (
         <div className="space-y-6">
           <form onSubmit={handleCreateEquipment} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
             <h3 className="text-base font-semibold text-slate-900">Add Commercial Equipment</h3>
@@ -901,11 +1050,11 @@ export function AdminConsoleView({
       )}
 
       {/* Tab 4: Staff Roster */}
-      {activeTab === 'staff' && (
+      {safeTab === 'staff' && (
         <div className="space-y-6">
           <form onSubmit={handleAddStaff} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
             <h3 className="text-base font-semibold text-slate-900">Add Staff Member to Facility Roster</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-slate-700">Staff Code</span>
                 <input
@@ -964,6 +1113,32 @@ export function AdminConsoleView({
                   <option value="Midday">Midday</option>
                   <option value="Evening">Evening</option>
                 </select>
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-slate-700">Linked User UID (Optional)</span>
+                {!isLite && users.length > 0 ? (
+                  <select
+                    value={staffLinkedUid}
+                    onChange={(e) => setStaffLinkedUid(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md"
+                  >
+                    <option value="">Unlinked</option>
+                    {users.map((u) => (
+                      <option key={u.uid} value={u.uid}>
+                        {u.displayName} ({u.role})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    maxLength={128}
+                    value={staffLinkedUid}
+                    onChange={(e) => setStaffLinkedUid(e.target.value)}
+                    placeholder="Firebase UID"
+                    className="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-md"
+                  />
+                )}
               </label>
             </div>
             <div className="flex justify-end">

@@ -33,8 +33,45 @@ service cloud.firestore {
       return isVerifiedUser() && request.auth.token.email == 'raxvex@gmail.com';
     }
 
+    function userDocExists() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userRole() {
+      return userDocExists()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : 'member';
+    }
+
     function isAdmin() {
-      return isBootstrappedAdmin() || (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      return isBootstrappedAdmin() || (isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        userRole() == 'admin'
+      ));
+    }
+
+    function isKitchenManager() {
+      return isVerifiedUser() && userRole() == 'kitchen_manager';
+    }
+
+    function canBookRole() {
+      return isAdmin() || (isVerifiedUser() && userRole() in ['member', 'recipe_dev']);
+    }
+
+    function canReadRecipesRole() {
+      return isAdmin() || (isSignedIn() && userRole() in ['recipe_dev', 'kitchen_manager', 'member']);
+    }
+
+    function canWriteRecipesRole() {
+      return isAdmin() || (isVerifiedUser() && userRole() in ['recipe_dev', 'member']);
+    }
+
+    function canReadIngredientLibraryRole() {
+      return isAdmin() || (isSignedIn() && userRole() != 'aggregator');
+    }
+
+    function canWriteIngredientLibraryRole() {
+      return isAdmin() || isKitchenManager() || (isVerifiedUser() && userRole() in ['recipe_dev', 'member']);
     }
 
     function isDefaultCatalogSpace(spaceId) {
@@ -47,13 +84,19 @@ service cloud.firestore {
 
     function isValidUserProfile(data) {
       return data.keys().hasAll(['uid', 'displayName', 'email', 'role', 'loyaltyPoints', 'totalHoursBooked', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['uid', 'displayName', 'email', 'role', 'loyaltyPoints', 'totalHoursBooked', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'role', 'loyaltyPoints', 'totalHoursBooked', 'businessType', 'discoverInterests', 'newsletterSubscribed', 'newsletterTopics', 'followedInfluencerIds', 'preferredDir', 'createdAt', 'updatedAt'])
         && isValidId(data.uid)
         && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
         && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
-        && data.role in ['member', 'admin']
+        && data.role in ['member', 'recipe_dev', 'kitchen_manager', 'kitchen_worker', 'aggregator', 'admin']
         && data.loyaltyPoints is number && data.loyaltyPoints >= 0 && data.loyaltyPoints <= 10000000
         && data.totalHoursBooked is number && data.totalHoursBooked >= 0 && data.totalHoursBooked <= 100000
+        && (!('businessType' in data) || (data.businessType is string && data.businessType.size() <= 64))
+        && (!('discoverInterests' in data) || (data.discoverInterests is list && data.discoverInterests.size() <= 20 && (data.discoverInterests.size() == 0 || data.discoverInterests[0] is string)))
+        && (!('newsletterSubscribed' in data) || data.newsletterSubscribed is bool)
+        && (!('newsletterTopics' in data) || (data.newsletterTopics is list && data.newsletterTopics.size() <= 20 && (data.newsletterTopics.size() == 0 || data.newsletterTopics[0] is string)))
+        && (!('followedInfluencerIds' in data) || (data.followedInfluencerIds is list && data.followedInfluencerIds.size() <= 100 && (data.followedInfluencerIds.size() == 0 || data.followedInfluencerIds[0] is string)))
+        && (!('preferredDir' in data) || data.preferredDir in ['ltr', 'rtl'])
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -279,6 +322,245 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'category', 'status', 'currentRecipeVersionId', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'category', 'status', 'currentRecipeVersionId', 'targetMarkupPct', 'sellingPriceKwd', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.category in ['Bakery', 'Sauce & Emulsion', 'Fermentation', 'Plant-Based', 'Confectionery', 'Savory Prep']
+        && data.status in ['active', 'testing', 'archived']
+        && data.currentRecipeVersionId is string && data.currentRecipeVersionId.size() <= 128
+        && (!('targetMarkupPct' in data) || (data.targetMarkupPct is number && data.targetMarkupPct >= 0 && data.targetMarkupPct <= 5000))
+        && (!('sellingPriceKwd' in data) || (data.sellingPriceKwd is number && data.sellingPriceKwd >= 0 && data.sellingPriceKwd <= 100000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRecipeVersion(data) {
+      return data.keys().hasAll(['id', 'productId', 'ownerId', 'versionNumber', 'ingredients', 'batchSize', 'expectedYield', 'yieldUnit', 'prepMinutes', 'targetTempC', 'method', 'equipment', 'expectedCost', 'changeReason', 'expectedEffect', 'actualOutcome', 'validationStatus', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'productId', 'ownerId', 'versionNumber', 'ingredients', 'batchSize', 'expectedYield', 'yieldUnit', 'prepMinutes', 'targetTempC', 'method', 'equipment', 'expectedCost', 'packagingCostKwd', 'overheadCostKwd', 'markupPct', 'suggestedPriceKwd', 'targetPieceWeightG', 'nutritionPer100g', 'allergens', 'additives', 'bakeTest', 'score', 'scoreNotes', 'diffs', 'changeReason', 'expectedEffect', 'actualOutcome', 'validationStatus', 'legacyRecipeId', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.productId)
+        && isValidId(data.ownerId)
+        && data.versionNumber is number && data.versionNumber >= 1 && data.versionNumber <= 10000
+        && data.ingredients is list && data.ingredients.size() <= 60
+        && (data.ingredients.size() == 0 || data.ingredients[0] is map)
+        && data.batchSize is number && data.batchSize >= 0 && data.batchSize <= 10000000
+        && data.expectedYield is number && data.expectedYield > 0 && data.expectedYield <= 1000000
+        && data.yieldUnit is string && data.yieldUnit.size() >= 1 && data.yieldUnit.size() <= 24
+        && data.prepMinutes is number && data.prepMinutes >= 0 && data.prepMinutes <= 10000
+        && data.targetTempC is number && data.targetTempC >= -50 && data.targetTempC <= 450
+        && data.method is string && data.method.size() <= 2000
+        && data.equipment is list && data.equipment.size() <= 20
+        && (data.equipment.size() == 0 || data.equipment[0] is string)
+        && data.expectedCost is number && data.expectedCost >= 0 && data.expectedCost <= 1000000
+        && (!('packagingCostKwd' in data) || (data.packagingCostKwd is number && data.packagingCostKwd >= 0 && data.packagingCostKwd <= 100000))
+        && (!('overheadCostKwd' in data) || (data.overheadCostKwd is number && data.overheadCostKwd >= 0 && data.overheadCostKwd <= 100000))
+        && (!('markupPct' in data) || (data.markupPct is number && data.markupPct >= 0 && data.markupPct <= 5000))
+        && (!('suggestedPriceKwd' in data) || (data.suggestedPriceKwd is number && data.suggestedPriceKwd >= 0 && data.suggestedPriceKwd <= 100000))
+        && (!('targetPieceWeightG' in data) || (data.targetPieceWeightG is number && data.targetPieceWeightG > 0 && data.targetPieceWeightG <= 100000))
+        && (!('nutritionPer100g' in data) || data.nutritionPer100g is map)
+        && (!('allergens' in data) || (data.allergens is list && data.allergens.size() <= 20))
+        && (!('additives' in data) || (data.additives is list && data.additives.size() <= 30))
+        && (!('bakeTest' in data) || data.bakeTest is map)
+        && (!('score' in data) || (data.score is number && data.score >= 1 && data.score <= 10))
+        && (!('scoreNotes' in data) || (data.scoreNotes is string && data.scoreNotes.size() <= 600))
+        && (!('diffs' in data) || (data.diffs is list && data.diffs.size() <= 80))
+        && data.changeReason is string && data.changeReason.size() <= 400
+        && data.expectedEffect is string && data.expectedEffect.size() <= 400
+        && data.actualOutcome is string && data.actualOutcome.size() <= 600
+        && data.validationStatus in ['draft', 'testing', 'consumer_validated', 'production_validated', 'approved']
+        && (!('legacyRecipeId' in data) || (data.legacyRecipeId is string && data.legacyRecipeId.size() <= 128))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidExperiment(data) {
+      return data.keys().hasAll(['id', 'productId', 'ownerId', 'objective', 'baselineVersionId', 'variableChanged', 'experimentVersionId', 'expectedResult', 'decision', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'productId', 'ownerId', 'objective', 'baselineVersionId', 'variableChanged', 'experimentVersionId', 'expectedResult', 'decision', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.productId)
+        && isValidId(data.ownerId)
+        && data.objective is string && data.objective.size() >= 1 && data.objective.size() <= 300
+        && isValidId(data.baselineVersionId)
+        && data.variableChanged is string && data.variableChanged.size() >= 1 && data.variableChanged.size() <= 240
+        && isValidId(data.experimentVersionId)
+        && data.expectedResult is string && data.expectedResult.size() <= 400
+        && data.decision in ['adopt', 'reject', 'continue']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMaterialOrder(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'orderedByName', 'orderCode', 'supplier', 'sourceProductId', 'sourceVersionLabel', 'items', 'subtotalKwd', 'deliveryFeeKwd', 'totalKwd', 'status', 'expectedDate', 'notes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'orderedByName', 'orderCode', 'supplier', 'sourceProductId', 'sourceVersionLabel', 'items', 'subtotalKwd', 'deliveryFeeKwd', 'totalKwd', 'status', 'expectedDate', 'notes', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.orderedByName is string && data.orderedByName.size() >= 1 && data.orderedByName.size() <= 100
+        && data.orderCode is string && data.orderCode.size() >= 1 && data.orderCode.size() <= 48
+        && data.supplier is string && data.supplier.size() >= 1 && data.supplier.size() <= 100
+        && data.sourceProductId is string && data.sourceProductId.size() <= 128
+        && data.sourceVersionLabel is string && data.sourceVersionLabel.size() <= 48
+        && data.items is list && data.items.size() >= 1 && data.items.size() <= 40
+        && data.items[0] is map
+        && data.subtotalKwd is number && data.subtotalKwd >= 0 && data.subtotalKwd <= 1000000
+        && data.deliveryFeeKwd is number && data.deliveryFeeKwd >= 0 && data.deliveryFeeKwd <= 100000
+        && data.totalKwd is number && data.totalKwd >= 0 && data.totalKwd <= 1100000
+        && data.status in ['ordered', 'in-transit', 'received', 'cancelled']
+        && data.expectedDate is string && data.expectedDate.size() <= 32
+        && data.notes is string && data.notes.size() <= 400
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidEnCuisineItem(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'sectionType', 'title', 'subtitle', 'category', 'description', 'badgeType', 'isActive', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'sectionType', 'title', 'subtitle', 'category', 'description', 'priceKwd', 'badgeType', 'startDate', 'endDate', 'isActive', 'metadata', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.sectionType in ['equipment', 'supplier_product', 'influencer', 'brand', 'editorial']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.subtitle is string && data.subtitle.size() <= 160
+        && data.category is string && data.category.size() <= 100
+        && data.description is string && data.description.size() <= 2000
+        && (!('priceKwd' in data) || (data.priceKwd is number && data.priceKwd >= 0 && data.priceKwd <= 1000000))
+        && data.badgeType in ['none', 'featured', 'sponsored']
+        && (!('startDate' in data) || (data.startDate is string && data.startDate.size() <= 32))
+        && (!('endDate' in data) || (data.endDate is string && data.endDate.size() <= 32))
+        && data.isActive is bool
+        && (!('metadata' in data) || data.metadata is map)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEnCuisineIngredientLink(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'recipeId', 'recipeTitle', 'ingredientName', 'supplierProductId', 'supplierProductName', 'supplierName', 'unitPriceKwd', 'costPerKgKwd', 'packSizeLabel', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'recipeId', 'recipeTitle', 'ingredientName', 'supplierProductId', 'supplierProductName', 'supplierName', 'unitPriceKwd', 'costPerKgKwd', 'packSizeLabel', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.recipeId is string && data.recipeId.size() <= 128
+        && data.recipeTitle is string && data.recipeTitle.size() <= 140
+        && data.ingredientName is string && data.ingredientName.size() >= 1 && data.ingredientName.size() <= 120
+        && data.supplierProductId is string && data.supplierProductId.size() <= 128
+        && data.supplierProductName is string && data.supplierProductName.size() >= 1 && data.supplierProductName.size() <= 140
+        && data.supplierName is string && data.supplierName.size() <= 120
+        && data.unitPriceKwd is number && data.unitPriceKwd >= 0 && data.unitPriceKwd <= 100000
+        && data.costPerKgKwd is number && data.costPerKgKwd >= 0 && data.costPerKgKwd <= 100000
+        && data.packSizeLabel is string && data.packSizeLabel.size() <= 60
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEnCuisineAnalytics(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'placement', 'itemId', 'itemTitle', 'eventType', 'createdAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'placement', 'itemId', 'itemTitle', 'eventType', 'createdAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.placement is string && data.placement.size() >= 1 && data.placement.size() <= 80
+        && data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 128
+        && data.itemTitle is string && data.itemTitle.size() <= 160
+        && data.eventType in ['impression', 'click']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidIngredientLibraryDoc(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'ingredientId', 'name', 'cat', 'custom', 'vegan', 'allergens', 'costUnit', 'costKg', 'wastagePct', 'kcal', 'fat', 'satFat', 'sugar', 'protein', 'carbs', 'stockQty', 'history', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'ingredientId', 'name', 'cat', 'custom', 'vegan', 'allergens', 'costUnit', 'costKg', 'wastagePct', 'pieceWeightG', 'bulkPieces', 'costPerUnit', 'bulkUnitQty', 'rollLengthM', 'rollWidthMM', 'gsm', 'costPerRoll', 'wrapLengthCmPerUnit', 'bulkQty', 'bulkUnit', 'bulkCost', 'bulkCurrency', 'kcal', 'fat', 'satFat', 'sugar', 'protein', 'carbs', 'ecode', 'dosage', 'func', 'note', 'stockQty', 'history', 'isDeleted', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && isValidId(data.ingredientId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 140
+        && data.cat is string && data.cat.size() >= 1 && data.cat.size() <= 80
+        && data.custom is bool
+        && data.vegan is bool
+        && data.allergens is list && data.allergens.size() <= 20
+        && (data.allergens.size() == 0 || data.allergens[0] is string)
+        && data.costUnit in ['weight', 'piece', 'unit', 'roll']
+        && data.costKg is number && data.costKg >= 0 && data.costKg <= 1000000
+        && data.wastagePct is number && data.wastagePct >= 0 && data.wastagePct <= 99
+        && (!('pieceWeightG' in data) || (data.pieceWeightG is number && data.pieceWeightG >= 0 && data.pieceWeightG <= 100000))
+        && (!('bulkPieces' in data) || (data.bulkPieces is number && data.bulkPieces >= 0 && data.bulkPieces <= 1000000))
+        && (!('costPerUnit' in data) || (data.costPerUnit is number && data.costPerUnit >= 0 && data.costPerUnit <= 100000))
+        && (!('bulkUnitQty' in data) || (data.bulkUnitQty is number && data.bulkUnitQty >= 0 && data.bulkUnitQty <= 10000000))
+        && (!('rollLengthM' in data) || (data.rollLengthM is number && data.rollLengthM >= 0 && data.rollLengthM <= 1000000))
+        && (!('rollWidthMM' in data) || (data.rollWidthMM is number && data.rollWidthMM >= 0 && data.rollWidthMM <= 100000))
+        && (!('gsm' in data) || (data.gsm is number && data.gsm >= 0 && data.gsm <= 10000))
+        && (!('costPerRoll' in data) || (data.costPerRoll is number && data.costPerRoll >= 0 && data.costPerRoll <= 1000000))
+        && (!('wrapLengthCmPerUnit' in data) || (data.wrapLengthCmPerUnit is number && data.wrapLengthCmPerUnit >= 0 && data.wrapLengthCmPerUnit <= 10000))
+        && (!('bulkQty' in data) || (data.bulkQty is number && data.bulkQty >= 0 && data.bulkQty <= 10000000))
+        && (!('bulkUnit' in data) || data.bulkUnit in ['kg', 'g'])
+        && (!('bulkCost' in data) || (data.bulkCost is number && data.bulkCost >= 0 && data.bulkCost <= 1000000))
+        && (!('bulkCurrency' in data) || (data.bulkCurrency is string && data.bulkCurrency.size() <= 12))
+        && data.kcal is number && data.kcal >= 0 && data.kcal <= 5000
+        && data.fat is number && data.fat >= 0 && data.fat <= 200
+        && data.satFat is number && data.satFat >= 0 && data.satFat <= 200
+        && data.sugar is number && data.sugar >= 0 && data.sugar <= 200
+        && data.protein is number && data.protein >= 0 && data.protein <= 200
+        && data.carbs is number && data.carbs >= 0 && data.carbs <= 200
+        && (!('ecode' in data) || (data.ecode is string && data.ecode.size() <= 24))
+        && (!('dosage' in data) || (data.dosage is string && data.dosage.size() <= 160))
+        && (!('func' in data) || (data.func is string && data.func.size() <= 200))
+        && (!('note' in data) || (data.note is string && data.note.size() <= 500))
+        && data.stockQty is number && data.stockQty >= 0 && data.stockQty <= 100000000
+        && data.history is list && data.history.size() <= 30
+        && (data.history.size() == 0 || data.history[0] is map)
+        && (!('isDeleted' in data) || data.isDeleted is bool)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSupplierRfq(data) {
+      return data.keys().hasAll(['id', 'rfqCode', 'buyerUid', 'buyerName', 'requestType', 'categoryPath', 'itemName', 'quantity', 'unit', 'targetUnitPriceKwd', 'specifications', 'certifications', 'tradeTerms', 'paymentTerms', 'deliveryCity', 'neededByDate', 'sourceRecipeName', 'status', 'awardedQuoteId', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'rfqCode', 'buyerUid', 'buyerName', 'requestType', 'categoryPath', 'itemName', 'quantity', 'unit', 'targetUnitPriceKwd', 'specifications', 'certifications', 'tradeTerms', 'paymentTerms', 'deliveryCity', 'neededByDate', 'sourceRecipeName', 'status', 'awardedQuoteId', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.rfqCode is string && data.rfqCode.size() >= 1 && data.rfqCode.size() <= 48
+        && isValidId(data.buyerUid)
+        && data.buyerName is string && data.buyerName.size() >= 1 && data.buyerName.size() <= 100
+        && data.requestType in ['ingredient', 'machinery', 'packaging']
+        && data.categoryPath is string && data.categoryPath.size() >= 1 && data.categoryPath.size() <= 180
+        && data.itemName is string && data.itemName.size() >= 1 && data.itemName.size() <= 140
+        && data.quantity is number && data.quantity > 0 && data.quantity <= 10000000
+        && data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 24
+        && data.targetUnitPriceKwd is number && data.targetUnitPriceKwd >= 0 && data.targetUnitPriceKwd <= 1000000
+        && data.specifications is string && data.specifications.size() <= 1500
+        && data.certifications is list && data.certifications.size() <= 10
+        && (data.certifications.size() == 0 || data.certifications[0] is string)
+        && data.tradeTerms in ['DDP Kitchen Door', 'CIF Kuwait', 'FOB', 'Ex-Works']
+        && data.paymentTerms is string && data.paymentTerms.size() <= 120
+        && data.deliveryCity is string && data.deliveryCity.size() <= 80
+        && data.neededByDate is string && data.neededByDate.size() <= 32
+        && data.sourceRecipeName is string && data.sourceRecipeName.size() <= 140
+        && data.status in ['open', 'quoted', 'awarded', 'closed']
+        && data.awardedQuoteId is string && data.awardedQuoteId.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSupplierQuote(data) {
+      return data.keys().hasAll(['id', 'rfqId', 'buyerUid', 'supplierUid', 'supplierCompany', 'supplierContact', 'originCountry', 'quotedUnitPriceKwd', 'moqQty', 'moqUnit', 'leadTimeDays', 'shippingTerms', 'paymentTerms', 'validUntilDate', 'warrantyOrShelfLife', 'notes', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'rfqId', 'buyerUid', 'supplierUid', 'supplierCompany', 'supplierContact', 'originCountry', 'quotedUnitPriceKwd', 'moqQty', 'moqUnit', 'leadTimeDays', 'shippingTerms', 'paymentTerms', 'validUntilDate', 'warrantyOrShelfLife', 'notes', 'status', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.rfqId)
+        && isValidId(data.buyerUid)
+        && isValidId(data.supplierUid)
+        && data.supplierCompany is string && data.supplierCompany.size() >= 1 && data.supplierCompany.size() <= 120
+        && data.supplierContact is string && data.supplierContact.size() <= 100
+        && data.originCountry is string && data.originCountry.size() <= 80
+        && data.quotedUnitPriceKwd is number && data.quotedUnitPriceKwd >= 0 && data.quotedUnitPriceKwd <= 1000000
+        && data.moqQty is number && data.moqQty > 0 && data.moqQty <= 10000000
+        && data.moqUnit is string && data.moqUnit.size() >= 1 && data.moqUnit.size() <= 24
+        && data.leadTimeDays is number && data.leadTimeDays >= 0 && data.leadTimeDays <= 3650
+        && data.shippingTerms is string && data.shippingTerms.size() <= 120
+        && data.paymentTerms is string && data.paymentTerms.size() <= 120
+        && data.validUntilDate is string && data.validUntilDate.size() <= 32
+        && data.warrantyOrShelfLife is string && data.warrantyOrShelfLife.size() <= 160
+        && data.notes is string && data.notes.size() <= 1000
+        && data.status in ['submitted', 'shortlisted', 'accepted', 'declined']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     match /admins/{uid} {
       allow get: if isValidId(uid) && (isOwner(uid) || isAdmin());
       allow list: if isBootstrappedAdmin();
@@ -289,7 +571,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
-      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if isVerifiedUser()
         && isValidId(userId)
         && isOwner(userId)
@@ -310,6 +592,7 @@ service cloud.firestore {
           isAdmin() ||
           (isOwner(userId) && incoming().role == existing().role && (
             incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['businessType', 'discoverInterests', 'newsletterSubscribed', 'newsletterTopics', 'followedInfluencerIds', 'preferredDir', 'updatedAt']) ||
             (incoming().diff(existing()).affectedKeys().hasOnly(['loyaltyPoints', 'totalHoursBooked', 'updatedAt']) && incoming().loyaltyPoints <= existing().get('loyaltyPoints', 0) + 2400 && incoming().totalHoursBooked <= existing().get('totalHoursBooked', 0) + 24)
           ))
         );
@@ -317,18 +600,18 @@ service cloud.firestore {
     }
 
     match /spaces/{spaceId} {
-      allow get: if isSignedIn() && isValidId(spaceId) && (existing().isActive == true || isAdmin());
-      allow list: if isSignedIn() && (resource.data.isActive == true || isBootstrappedAdmin());
-      allow create: if isAdmin() && isValidId(spaceId) && isValidKitchenSpace(incoming()) && incoming().id == spaceId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
-      allow update: if isAdmin() && isValidId(spaceId) && isValidKitchenSpace(incoming()) && incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      allow get: if isSignedIn() && isValidId(spaceId) && (existing().isActive == true || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isAdmin() || isKitchenManager());
+      allow create: if (isAdmin() || isKitchenManager()) && isValidId(spaceId) && isValidKitchenSpace(incoming()) && incoming().id == spaceId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if (isAdmin() || isKitchenManager()) && isValidId(spaceId) && isValidKitchenSpace(incoming()) && incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(spaceId);
     }
 
     match /equipment/{equipmentId} {
-      allow get: if isSignedIn() && isValidId(equipmentId) && (existing().isActive == true || isAdmin());
-      allow list: if isSignedIn() && (resource.data.isActive == true || isBootstrappedAdmin());
-      allow create: if isAdmin() && isValidId(equipmentId) && isValidEquipment(incoming()) && incoming().id == equipmentId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
-      allow update: if isAdmin() && isValidId(equipmentId) && isValidEquipment(incoming()) && incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      allow get: if isSignedIn() && isValidId(equipmentId) && (existing().isActive == true || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isAdmin() || isKitchenManager());
+      allow create: if (isAdmin() || isKitchenManager()) && isValidId(equipmentId) && isValidEquipment(incoming()) && incoming().id == equipmentId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if (isAdmin() || isKitchenManager()) && isValidId(equipmentId) && isValidEquipment(incoming()) && incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(equipmentId);
     }
 
@@ -336,6 +619,7 @@ service cloud.firestore {
       allow get: if isSignedIn() && isValidId(slotId) && existing().status in ['confirmed', 'in-progress', 'completed', 'cancelled'];
       allow list: if isSignedIn() && resource.data.status in ['confirmed', 'in-progress', 'completed'];
       allow create: if isVerifiedUser()
+        && canBookRole()
         && isValidId(slotId)
         && isValidAvailabilitySlot(incoming())
         && (incoming().ownerId == request.auth.uid || isAdmin())
@@ -350,15 +634,16 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && (
           isAdmin() ||
-          (existing().ownerId == request.auth.uid && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
+          (existing().ownerId == request.auth.uid && canBookRole() && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
         );
       allow delete: if isAdmin() && isValidId(slotId);
     }
 
     match /bookings/{bookingId} {
       allow get: if isSignedIn() && isValidId(bookingId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
       allow create: if isVerifiedUser()
+        && canBookRole()
         && isValidId(bookingId)
         && isValidBooking(incoming())
         && (incoming().ownerId == request.auth.uid || isAdmin())
@@ -375,15 +660,16 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && (
           isAdmin() ||
-          (existing().ownerId == request.auth.uid && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']) && incoming().status in ['confirmed', 'cancelled'])
+          (existing().ownerId == request.auth.uid && canBookRole() && existing().status != 'completed' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']) && incoming().status in ['confirmed', 'cancelled'])
         );
       allow delete: if isAdmin() && isValidId(bookingId);
     }
 
     match /bookingQueue/{queueId} {
       allow get: if isSignedIn() && isValidId(queueId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
       allow create: if isVerifiedUser()
+        && canBookRole()
         && isValidId(queueId)
         && isValidQueueEntry(incoming())
         && incoming().ownerId == request.auth.uid
@@ -398,14 +684,14 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && (
           isAdmin() ||
-          (existing().ownerId == request.auth.uid && existing().status == 'waiting' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
+          (existing().ownerId == request.auth.uid && canBookRole() && existing().status == 'waiting' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
         );
       allow delete: if isVerifiedUser() && isValidId(queueId) && (existing().ownerId == request.auth.uid || isAdmin());
     }
 
     match /productionBatches/{batchId} {
-      allow get: if isSignedIn() && isValidId(batchId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isSignedIn() && isValidId(batchId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
       allow create: if isVerifiedUser()
         && isValidId(batchId)
         && isValidProductionBatch(incoming())
@@ -420,14 +706,15 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && (
           isAdmin() ||
+          isKitchenManager() ||
           (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['textureScore', 'flavorScore', 'appearanceScore', 'qcScore', 'qcStatus', 'productionNotes', 'attachedFormId', 'formResponseCount', 'formAvgRating', 'updatedAt']))
         );
-      allow delete: if isVerifiedUser() && isValidId(batchId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow delete: if isVerifiedUser() && isValidId(batchId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
     }
 
     match /attachedForms/{formDocId} {
-      allow get: if isSignedIn() && isValidId(formDocId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isSignedIn() && isValidId(formDocId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
       allow create: if isVerifiedUser()
         && isValidId(formDocId)
         && isValidAttachedForm(incoming())
@@ -448,8 +735,8 @@ service cloud.firestore {
     }
 
     match /rawMaterials/{materialId} {
-      allow get: if isSignedIn() && isValidId(materialId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isSignedIn() && isValidId(materialId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
       allow create: if isVerifiedUser()
         && isValidId(materialId)
         && isValidRawMaterial(incoming())
@@ -464,21 +751,24 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && (
           isAdmin() ||
+          isKitchenManager() ||
           (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'storageZone', 'notes', 'updatedAt']))
         );
-      allow delete: if isVerifiedUser() && isValidId(materialId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow delete: if isVerifiedUser() && isValidId(materialId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
     }
 
     match /recipes/{recipeId} {
-      allow get: if isSignedIn() && isValidId(recipeId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isSignedIn() && isValidId(recipeId) && canReadRecipesRole() && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && canReadRecipesRole() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
       allow create: if isVerifiedUser()
+        && canWriteRecipesRole()
         && isValidId(recipeId)
         && isValidRecipe(incoming())
         && incoming().ownerId == request.auth.uid
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
       allow update: if isVerifiedUser()
+        && canWriteRecipesRole()
         && isValidId(recipeId)
         && isValidRecipe(incoming())
         && incoming().ownerId == existing().ownerId
@@ -488,21 +778,22 @@ service cloud.firestore {
           isAdmin() ||
           (existing().ownerId == request.auth.uid && existing().outcome != 'archived' && incoming().diff(existing()).affectedKeys().hasOnly(['version', 'outcome', 'tastingNotes', 'prepMinutes', 'targetTempC', 'yieldText', 'ingredients', 'updatedAt']))
         );
-      allow delete: if isVerifiedUser() && isValidId(recipeId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow delete: if isVerifiedUser() && canWriteRecipesRole() && isValidId(recipeId) && (existing().ownerId == request.auth.uid || isAdmin());
     }
 
     match /staff/{staffId} {
-      allow get: if isSignedIn() && isValidId(staffId) && (existing().isActive == true || isAdmin());
-      allow list: if isSignedIn() && (resource.data.isActive == true || isBootstrappedAdmin());
-      allow create: if isAdmin() && isValidId(staffId) && isValidStaffMember(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
-      allow update: if isAdmin() && isValidId(staffId) && isValidStaffMember(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      allow get: if isSignedIn() && isValidId(staffId) && (existing().isActive == true || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isAdmin() || isKitchenManager());
+      allow create: if (isAdmin() || isKitchenManager()) && isValidId(staffId) && isValidStaffMember(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if (isAdmin() || isKitchenManager()) && isValidId(staffId) && isValidStaffMember(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(staffId);
     }
 
     match /duties/{dutyId} {
-      allow get: if isSignedIn() && isValidId(dutyId) && (existing().ownerId == request.auth.uid || existing().assignedByUid == request.auth.uid || existing().assigneeUid == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || resource.data.assigneeUid == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isSignedIn() && isValidId(dutyId) && (existing().ownerId == request.auth.uid || existing().assignedByUid == request.auth.uid || existing().assigneeUid == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || resource.data.assigneeUid == request.auth.uid || isAdmin() || isKitchenManager());
       allow create: if isVerifiedUser()
+        && (isAdmin() || isKitchenManager() || userRole() in ['recipe_dev', 'member'])
         && isValidId(dutyId)
         && isValidDuty(incoming())
         && incoming().ownerId == request.auth.uid
@@ -520,14 +811,15 @@ service cloud.firestore {
         && incoming().updatedAt == request.time
         && (
           isAdmin() ||
+          isKitchenManager() ||
           (existing().status != 'completed' && (existing().ownerId == request.auth.uid || existing().assigneeUid == request.auth.uid) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'completionNotes', 'updatedAt']))
         );
-      allow delete: if isVerifiedUser() && isValidId(dutyId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow delete: if isVerifiedUser() && isValidId(dutyId) && (isAdmin() || isKitchenManager() || (existing().ownerId == request.auth.uid && userRole() != 'kitchen_worker'));
     }
 
     match /logs/{logId} {
-      allow get: if isSignedIn() && isValidId(logId) && (existing().ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow get: if isSignedIn() && isValidId(logId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
       allow create: if isVerifiedUser()
         && isValidId(logId)
         && isValidLogEntry(incoming())
@@ -535,6 +827,253 @@ service cloud.firestore {
         && incoming().createdAt == request.time;
       allow update: if isAdmin() && isValidId(logId) && isValidLogEntry(incoming()) && incoming().ownerId == existing().ownerId && incoming().createdAt == existing().createdAt;
       allow delete: if isAdmin() && isValidId(logId);
+    }
+
+    match /products/{productId} {
+      allow get: if isSignedIn() && isValidId(productId) && canReadRecipesRole() && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && canReadRecipesRole() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && canWriteRecipesRole()
+        && isValidId(productId)
+        && isValidProduct(incoming())
+        && incoming().id == productId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && canWriteRecipesRole()
+        && isValidId(productId)
+        && isValidProduct(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'status', 'currentRecipeVersionId', 'targetMarkupPct', 'sellingPriceKwd', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(productId);
+    }
+
+    match /recipeVersions/{versionId} {
+      allow get: if isSignedIn() && isValidId(versionId) && canReadRecipesRole() && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && canReadRecipesRole() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && canWriteRecipesRole()
+        && isValidId(versionId)
+        && isValidRecipeVersion(incoming())
+        && incoming().id == versionId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/products/$(incoming().productId));
+      allow update: if isVerifiedUser()
+        && canWriteRecipesRole()
+        && isValidId(versionId)
+        && isValidRecipeVersion(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().productId == existing().productId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (existing().ownerId == request.auth.uid || isAdmin())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['actualOutcome', 'validationStatus', 'bakeTest', 'score', 'scoreNotes', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /experiments/{experimentId} {
+      allow get: if isSignedIn() && isValidId(experimentId) && canReadRecipesRole() && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && canReadRecipesRole() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && canWriteRecipesRole()
+        && isValidId(experimentId)
+        && isValidExperiment(incoming())
+        && incoming().id == experimentId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && canWriteRecipesRole()
+        && isValidId(experimentId)
+        && isValidExperiment(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().productId == existing().productId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['decision', 'expectedResult', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && canWriteRecipesRole() && isValidId(experimentId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /materialOrders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && isValidId(orderId)
+        && isValidMaterialOrder(incoming())
+        && incoming().id == orderId
+        && incoming().ownerId == request.auth.uid
+        && incoming().status == 'ordered'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(orderId)
+        && isValidMaterialOrder(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          isKitchenManager() ||
+          (existing().ownerId == request.auth.uid && existing().status != 'received' && existing().status != 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(orderId) && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+    }
+
+    match /enCuisineItems/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && (existing().isActive == true || existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.isActive == true || resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(itemId)
+        && isValidEnCuisineItem(incoming())
+        && incoming().id == itemId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (incoming().sectionType == 'brand' && incoming().badgeType == 'none' && incoming().isActive == true)
+        );
+      allow update: if isVerifiedUser()
+        && isValidId(itemId)
+        && isValidEnCuisineItem(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().sectionType == 'brand' && incoming().badgeType == existing().badgeType)
+        );
+      allow delete: if isVerifiedUser() && isValidId(itemId) && (isAdmin() || (existing().ownerId == request.auth.uid && existing().sectionType == 'brand'));
+    }
+
+    match /enCuisineIngredientLinks/{linkId} {
+      allow get: if isSignedIn() && isValidId(linkId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(linkId)
+        && isValidEnCuisineIngredientLink(incoming())
+        && incoming().id == linkId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(linkId)
+        && isValidEnCuisineIngredientLink(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (existing().ownerId == request.auth.uid || isAdmin());
+      allow delete: if isVerifiedUser() && isValidId(linkId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /enCuisineAnalytics/{eventId} {
+      allow get: if isSignedIn() && isValidId(eventId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(eventId)
+        && isValidEnCuisineAnalytics(incoming())
+        && incoming().id == eventId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(eventId);
+    }
+
+    match /ingredientLibrary/{docId} {
+      allow get: if isSignedIn() && isValidId(docId) && canReadIngredientLibraryRole() && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && canReadIngredientLibraryRole() && (resource.data.ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && canWriteIngredientLibraryRole()
+        && isValidId(docId)
+        && isValidIngredientLibraryDoc(incoming())
+        && incoming().id == docId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && canWriteIngredientLibraryRole()
+        && isValidId(docId)
+        && isValidIngredientLibraryDoc(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().ingredientId == existing().ingredientId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+      allow delete: if isVerifiedUser()
+        && canWriteIngredientLibraryRole()
+        && isValidId(docId)
+        && (existing().ownerId == request.auth.uid || isAdmin() || isKitchenManager());
+    }
+
+    match /supplierRfqs/{rfqId} {
+      allow get: if isSignedIn() && isValidId(rfqId) && (existing().buyerUid == request.auth.uid || existing().status in ['open', 'quoted'] || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.buyerUid == request.auth.uid || resource.data.status in ['open', 'quoted'] || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && isValidId(rfqId)
+        && isValidSupplierRfq(incoming())
+        && incoming().id == rfqId
+        && incoming().buyerUid == request.auth.uid
+        && incoming().status == 'open'
+        && incoming().awardedQuoteId == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(rfqId)
+        && isValidSupplierRfq(incoming())
+        && incoming().id == existing().id
+        && incoming().buyerUid == existing().buyerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (existing().buyerUid == request.auth.uid || isAdmin());
+      allow delete: if isVerifiedUser() && isValidId(rfqId) && (existing().buyerUid == request.auth.uid || isAdmin());
+    }
+
+    match /supplierQuotes/{quoteId} {
+      allow get: if isSignedIn() && isValidId(quoteId) && (existing().buyerUid == request.auth.uid || existing().supplierUid == request.auth.uid || isAdmin() || isKitchenManager());
+      allow list: if isSignedIn() && (resource.data.buyerUid == request.auth.uid || resource.data.supplierUid == request.auth.uid || isAdmin() || isKitchenManager());
+      allow create: if isVerifiedUser()
+        && isValidId(quoteId)
+        && isValidSupplierQuote(incoming())
+        && incoming().id == quoteId
+        && incoming().supplierUid == request.auth.uid
+        && incoming().status == 'submitted'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/supplierRfqs/$(incoming().rfqId))
+        && get(/databases/$(database)/documents/supplierRfqs/$(incoming().rfqId)).data.status in ['open', 'quoted']
+        && incoming().buyerUid == get(/databases/$(database)/documents/supplierRfqs/$(incoming().rfqId)).data.buyerUid;
+      allow update: if isVerifiedUser()
+        && isValidId(quoteId)
+        && isValidSupplierQuote(incoming())
+        && incoming().id == existing().id
+        && incoming().rfqId == existing().rfqId
+        && incoming().buyerUid == existing().buyerUid
+        && incoming().supplierUid == existing().supplierUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          ((isAdmin() || existing().buyerUid == request.auth.uid) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          (existing().supplierUid == request.auth.uid && existing().status in ['submitted', 'shortlisted'] && incoming().status == existing().status && incoming().diff(existing()).affectedKeys().hasOnly(['quotedUnitPriceKwd', 'moqQty', 'moqUnit', 'leadTimeDays', 'shippingTerms', 'paymentTerms', 'validUntilDate', 'warrantyOrShelfLife', 'notes', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(quoteId) && (existing().supplierUid == request.auth.uid || isAdmin());
     }
   }
 }

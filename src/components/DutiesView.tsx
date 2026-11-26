@@ -21,6 +21,7 @@ interface DutiesViewProps {
   spaces: KitchenSpace[];
   bookings: Booking[];
   loading: boolean;
+  mineOnly?: boolean;
   onNotify: (msg: string, type?: 'success' | 'error') => void;
 }
 
@@ -32,6 +33,7 @@ export function DutiesView({
   spaces,
   bookings,
   loading,
+  mineOnly = false,
   onNotify,
 }: DutiesViewProps) {
   const activeStaff = useMemo(() => staff.filter((s) => s.isActive), [staff]);
@@ -172,7 +174,8 @@ export function DutiesView({
 
   return (
     <div className="space-y-8">
-      {/* Assign Staff Duty Form */}
+      {/* Assign Staff Duty Form (hidden for kitchen_worker mine-only view) */}
+      {!mineOnly && (
       <form onSubmit={handleAssignDuty} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
         <div className="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -293,13 +296,16 @@ export function DutiesView({
           </button>
         </div>
       </form>
+      )}
 
       {/* Duties Queue */}
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Active Duty Roster</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {mineOnly ? 'My Assigned Duties' : 'Active Duty Roster'}
+            </h2>
           </div>
 
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg self-start">
@@ -403,14 +409,16 @@ export function DutiesView({
                     <span className="text-xs font-semibold text-emerald-700 px-2">Completed</span>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDuty(duty)}
-                    title="Delete duty"
-                    className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded-md"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {!mineOnly && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDuty(duty)}
+                      title="Delete duty"
+                      className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded-md"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -30,6 +30,7 @@ import {
   FormProcessType,
   LIMITS,
   ProductionBatch,
+  ProductionBatchPrefillRequest,
   ProductionUnit,
   QcStatus,
   clampStr,
@@ -47,7 +48,10 @@ interface ProductionLogViewProps {
   batches: ProductionBatch[];
   attachedForms: AttachedGoogleForm[];
   preselectedBookingId?: string;
+  prefillBatch?: ProductionBatchPrefillRequest | null;
   loading: boolean;
+  myBatchesOnly?: boolean;
+  canOpenSurveyHistory?: boolean;
   onNotify: (msg: string, type?: 'success' | 'error') => void;
   onOpenSurveyHistory: () => void;
 }
@@ -61,7 +65,10 @@ export function ProductionLogView({
   batches,
   attachedForms,
   preselectedBookingId = '',
+  prefillBatch = null,
   loading,
+  myBatchesOnly = false,
+  canOpenSurveyHistory = true,
   onNotify,
   onOpenSurveyHistory,
 }: ProductionLogViewProps) {
@@ -108,9 +115,31 @@ export function ProductionLogView({
     }
   }, [preselectedBookingId, bookings]);
 
+  useEffect(() => {
+    if (!prefillBatch) return;
+    setProductName(prefillBatch.productName);
+    setQuantityProduced(String(prefillBatch.quantityProduced));
+    setUnit(prefillBatch.unit || 'units');
+    setBakeTempC(String(prefillBatch.bakeTempC || 175));
+    setProductionNotes(prefillBatch.productionNotes || '');
+    setQcStatus('hold');
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    setSelectedDate(dateStamp);
+    setBatchNumber((prev) =>
+      prev.startsWith('TB-')
+        ? prev
+        : `TB-${dateStamp.replace(/-/g, '')}-${String(batches.length + 1).padStart(2, '0')}`
+    );
+  }, [prefillBatch, batches.length]);
+
+  const scopedBatches = useMemo(
+    () => (myBatchesOnly ? batches.filter((b) => b.ownerId === uid) : batches),
+    [batches, myBatchesOnly, uid]
+  );
+
   const dayBatches = useMemo(
-    () => batches.filter((b) => b.date === selectedDate),
-    [batches, selectedDate]
+    () => scopedBatches.filter((b) => b.date === selectedDate),
+    [scopedBatches, selectedDate]
   );
 
   const dayForms = useMemo(
@@ -120,7 +149,7 @@ export function ProductionLogView({
 
   // Rank batches across chosen history scope (all production history or selected date)
   const rankedBatches = useMemo(() => {
-    const source = historyScope === 'date' && dayBatches.length > 0 ? dayBatches : batches;
+    const source = historyScope === 'date' && dayBatches.length > 0 ? dayBatches : scopedBatches;
     return [...source]
       .map((b) => {
         const formScore100 = b.formResponseCount > 0 ? b.formAvgRating * 10 : null;
@@ -131,7 +160,7 @@ export function ProductionLogView({
         return { ...b, compositeScore };
       })
       .sort((a, b) => b.compositeScore - a.compositeScore);
-  }, [historyScope, dayBatches, batches]);
+  }, [historyScope, dayBatches, scopedBatches]);
 
   // Batches targeted for the next Google Survey Form (checked rows from history, or visible ranked batches)
   const surveyTargetBatches = useMemo(() => {
@@ -915,7 +944,8 @@ export function ProductionLogView({
         </div>
       </form>
 
-      {/* Google Form Attachment & Sync Section */}
+      {/* Google Form Attachment & Sync Section (hidden in worker my-batches-only mode) */}
+      {!myBatchesOnly && (
       <section className="bg-white border border-slate-200 rounded-lg p-6 space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
@@ -945,14 +975,16 @@ export function ProductionLogView({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={onOpenSurveyHistory}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 whitespace-nowrap"
-            >
-              <History className="w-3.5 h-3.5" />
-              Survey History ({attachedForms.length})
-            </button>
+            {canOpenSurveyHistory && (
+              <button
+                type="button"
+                onClick={onOpenSurveyHistory}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 whitespace-nowrap"
+              >
+                <History className="w-3.5 h-3.5" />
+                Survey History ({attachedForms.length})
+              </button>
+            )}
 
             <button
               type="button"
@@ -1145,6 +1177,7 @@ export function ProductionLogView({
           </div>
         )}
       </section>
+      )}
 
       {/* Ranked Production Batches History Table with Survey Generator */}
       <section className="space-y-4">
@@ -1153,7 +1186,7 @@ export function ProductionLogView({
             <div className="flex items-center gap-2">
               <ClipboardCheck className="w-4 h-4 text-slate-500" />
               <h2 className="text-lg font-semibold text-slate-900">
-                Batch Production History &amp; Quality Ranking
+                {myBatchesOnly ? 'My Production Batches & Quality Ranking' : 'Batch Production History & Quality Ranking'}
               </h2>
             </div>
             <span className="text-xs font-mono tabular-nums text-slate-500">
@@ -1172,7 +1205,7 @@ export function ProductionLogView({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                All History ({batches.length})
+                All History ({scopedBatches.length})
               </button>
               <button
                 type="button"
@@ -1187,7 +1220,7 @@ export function ProductionLogView({
               </button>
             </div>
 
-            {rankedBatches.length > 0 && (
+            {!myBatchesOnly && rankedBatches.length > 0 && (
               <>
                 <button
                   type="button"
@@ -1306,15 +1339,28 @@ export function ProductionLogView({
                         {b.compositeScore}/100
                       </td>
                       <td className="py-3 px-4 text-xs whitespace-nowrap">
-                        {linkedSurveys.length > 0 ? (
-                          <button
-                            type="button"
-                            onClick={onOpenSurveyHistory}
-                            className="inline-flex items-center gap-1 font-medium text-teal-800 hover:underline"
-                          >
-                            <Link2 className="w-3 h-3" />
-                            {linkedSurveys.length} survey{linkedSurveys.length > 1 ? 's' : ''}
-                          </button>
+                        {myBatchesOnly ? (
+                          <span className="text-slate-400">
+                            {linkedSurveys.length > 0
+                              ? `${linkedSurveys.length} survey${linkedSurveys.length > 1 ? 's' : ''}`
+                              : '—'}
+                          </span>
+                        ) : linkedSurveys.length > 0 ? (
+                          canOpenSurveyHistory ? (
+                            <button
+                              type="button"
+                              onClick={onOpenSurveyHistory}
+                              className="inline-flex items-center gap-1 font-medium text-teal-800 hover:underline"
+                            >
+                              <Link2 className="w-3 h-3" />
+                              {linkedSurveys.length} survey{linkedSurveys.length > 1 ? 's' : ''}
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-slate-600">
+                              <Link2 className="w-3 h-3" />
+                              {linkedSurveys.length} survey{linkedSurveys.length > 1 ? 's' : ''}
+                            </span>
+                          )
                         ) : (
                           <button
                             type="button"

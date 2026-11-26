@@ -21,13 +21,33 @@
         },
         "role": {
           "type": "string",
-          "enum": ["member", "admin"]
+          "enum": ["member", "recipe_dev", "kitchen_manager", "kitchen_worker", "aggregator", "admin"]
         },
         "loyaltyPoints": {
           "type": "number"
         },
         "totalHoursBooked": {
           "type": "number"
+        },
+        "businessType": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "discoverInterests": {
+          "type": "array"
+        },
+        "newsletterSubscribed": {
+          "type": "boolean"
+        },
+        "newsletterTopics": {
+          "type": "array"
+        },
+        "followedInfluencerIds": {
+          "type": "array"
+        },
+        "preferredDir": {
+          "type": "string",
+          "enum": ["ltr", "rtl"]
         },
         "createdAt": {
           "type": "string",
@@ -672,10 +692,273 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["ownerId", "actorName", "eventType", "severity", "station", "tempReadingC", "message", "bookingId", "createdAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "R&D product master record linking to its active immutable recipe version.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "category": { "type": "string", "enum": ["Bakery", "Sauce & Emulsion", "Fermentation", "Plant-Based", "Confectionery", "Savory Prep"] },
+        "status": { "type": "string", "enum": ["active", "testing", "archived"] },
+        "currentRecipeVersionId": { "type": "string", "maxLength": 128 },
+        "targetMarkupPct": { "type": "number" },
+        "sellingPriceKwd": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "category", "status", "currentRecipeVersionId", "createdAt", "updatedAt"]
+    },
+    "RecipeVersion": {
+      "title": "RecipeVersion",
+      "description": "Immutable versioned formulation with gram-normalized ingredients, KWD costing, markup, and validation tracking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "productId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "versionNumber": { "type": "number" },
+        "ingredients": { "type": "array" },
+        "batchSize": { "type": "number" },
+        "expectedYield": { "type": "number" },
+        "yieldUnit": { "type": "string", "maxLength": 24 },
+        "prepMinutes": { "type": "number" },
+        "targetTempC": { "type": "number" },
+        "method": { "type": "string", "maxLength": 2000 },
+        "equipment": { "type": "array" },
+        "expectedCost": { "type": "number" },
+        "packagingCostKwd": { "type": "number" },
+        "overheadCostKwd": { "type": "number" },
+        "markupPct": { "type": "number" },
+        "suggestedPriceKwd": { "type": "number" },
+        "targetPieceWeightG": { "type": "number" },
+        "nutritionPer100g": { "type": "object" },
+        "allergens": { "type": "array" },
+        "additives": { "type": "array" },
+        "bakeTest": { "type": "object" },
+        "score": { "type": "number" },
+        "scoreNotes": { "type": "string", "maxLength": 600 },
+        "diffs": { "type": "array" },
+        "changeReason": { "type": "string", "maxLength": 400 },
+        "expectedEffect": { "type": "string", "maxLength": 400 },
+        "actualOutcome": { "type": "string", "maxLength": 600 },
+        "validationStatus": { "type": "string", "enum": ["draft", "testing", "consumer_validated", "production_validated", "approved"] },
+        "legacyRecipeId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "productId", "ownerId", "versionNumber", "ingredients", "batchSize", "expectedYield", "yieldUnit", "prepMinutes", "targetTempC", "method", "equipment", "expectedCost", "changeReason", "expectedEffect", "actualOutcome", "validationStatus", "createdAt", "updatedAt"]
+    },
+    "RecipeExperiment": {
+      "title": "RecipeExperiment",
+      "description": "Structured formulation experiment comparing baseline and iterated recipe versions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "productId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "objective": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "baselineVersionId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "variableChanged": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "experimentVersionId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "expectedResult": { "type": "string", "maxLength": 400 },
+        "decision": { "type": "string", "enum": ["adopt", "reject", "continue"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "productId", "ownerId", "objective", "baselineVersionId", "variableChanged", "experimentVersionId", "expectedResult", "decision", "createdAt", "updatedAt"]
+    },
+    "MaterialOrder": {
+      "title": "MaterialOrder",
+      "description": "Raw material supplier purchase order in KWD with receive-to-stock fulfillment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "orderedByName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "orderCode": { "type": "string", "minLength": 1, "maxLength": 48 },
+        "supplier": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "sourceProductId": { "type": "string", "maxLength": 128 },
+        "sourceVersionLabel": { "type": "string", "maxLength": 48 },
+        "items": { "type": "array" },
+        "subtotalKwd": { "type": "number" },
+        "deliveryFeeKwd": { "type": "number" },
+        "totalKwd": { "type": "number" },
+        "status": { "type": "string", "enum": ["ordered", "in-transit", "received", "cancelled"] },
+        "expectedDate": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "orderedByName", "orderCode", "supplier", "sourceProductId", "sourceVersionLabel", "items", "subtotalKwd", "deliveryFeeKwd", "totalKwd", "status", "expectedDate", "notes", "createdAt", "updatedAt"]
+    },
+    "EnCuisineCatalogItem": {
+      "title": "EnCuisineCatalogItem",
+      "description": "En Cuisine Discover catalog items (equipment, supplier products, influencers, brands, editorial) and user-submitted brands.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "sectionType": { "type": "string", "enum": ["equipment", "supplier_product", "influencer", "brand", "editorial"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "subtitle": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "priceKwd": { "type": "number" },
+        "badgeType": { "type": "string", "enum": ["none", "featured", "sponsored"] },
+        "startDate": { "type": "string", "maxLength": 32 },
+        "endDate": { "type": "string", "maxLength": 32 },
+        "isActive": { "type": "boolean" },
+        "metadata": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "sectionType", "title", "subtitle", "category", "description", "badgeType", "isActive", "createdAt", "updatedAt"]
+    },
+    "EnCuisineIngredientLink": {
+      "title": "EnCuisineIngredientLink",
+      "description": "Mapping between an En Cuisine Supplier Hub product and a recipe ingredient for real KWD costing updates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "recipeId": { "type": "string", "maxLength": 128 },
+        "recipeTitle": { "type": "string", "maxLength": 140 },
+        "ingredientName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "supplierProductId": { "type": "string", "maxLength": 128 },
+        "supplierProductName": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "supplierName": { "type": "string", "maxLength": 120 },
+        "unitPriceKwd": { "type": "number" },
+        "costPerKgKwd": { "type": "number" },
+        "packSizeLabel": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "recipeId", "recipeTitle", "ingredientName", "supplierProductId", "supplierProductName", "supplierName", "unitPriceKwd", "costPerKgKwd", "packSizeLabel", "createdAt", "updatedAt"]
+    },
+    "EnCuisineAnalyticsEvent": {
+      "title": "EnCuisineAnalyticsEvent",
+      "description": "Placement impression and click tracking stub for En Cuisine Discover placements.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "placement": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "itemId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "itemTitle": { "type": "string", "maxLength": 160 },
+        "eventType": { "type": "string", "enum": ["impression", "click"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "placement", "itemId", "itemTitle", "eventType", "createdAt"]
+    },
+    "IngredientLibraryDoc": {
+      "title": "IngredientLibraryDoc",
+      "description": "Persisted En Cuisine custom ingredients, per-owner nutrition/pricing/wastage overrides, and inventory stock history.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ingredientId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "cat": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "custom": { "type": "boolean" },
+        "vegan": { "type": "boolean" },
+        "allergens": { "type": "array" },
+        "costUnit": { "type": "string", "enum": ["weight", "piece", "unit", "roll"] },
+        "costKg": { "type": "number" },
+        "wastagePct": { "type": "number" },
+        "pieceWeightG": { "type": "number" },
+        "bulkPieces": { "type": "number" },
+        "costPerUnit": { "type": "number" },
+        "bulkUnitQty": { "type": "number" },
+        "rollLengthM": { "type": "number" },
+        "rollWidthMM": { "type": "number" },
+        "gsm": { "type": "number" },
+        "costPerRoll": { "type": "number" },
+        "wrapLengthCmPerUnit": { "type": "number" },
+        "bulkQty": { "type": "number" },
+        "bulkUnit": { "type": "string", "enum": ["kg", "g"] },
+        "bulkCost": { "type": "number" },
+        "bulkCurrency": { "type": "string", "maxLength": 12 },
+        "kcal": { "type": "number" },
+        "fat": { "type": "number" },
+        "satFat": { "type": "number" },
+        "sugar": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "ecode": { "type": "string", "maxLength": 24 },
+        "dosage": { "type": "string", "maxLength": 160 },
+        "func": { "type": "string", "maxLength": 200 },
+        "note": { "type": "string", "maxLength": 500 },
+        "stockQty": { "type": "number" },
+        "history": { "type": "array" },
+        "isDeleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "ingredientId", "name", "cat", "custom", "vegan", "allergens", "costUnit", "costKg", "wastagePct", "kcal", "fat", "satFat", "sugar", "protein", "carbs", "stockQty", "history", "createdAt", "updatedAt"]
+    },
+    "SupplierRfq": {
+      "title": "SupplierRfq",
+      "description": "Alibaba-format request for quotation posted by a kitchen buyer for ingredients, packaging, or machinery.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "rfqCode": { "type": "string", "minLength": 1, "maxLength": 48 },
+        "buyerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "buyerName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "requestType": { "type": "string", "enum": ["ingredient", "machinery", "packaging"] },
+        "categoryPath": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "itemName": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 24 },
+        "targetUnitPriceKwd": { "type": "number" },
+        "specifications": { "type": "string", "maxLength": 1500 },
+        "certifications": { "type": "array" },
+        "tradeTerms": { "type": "string", "enum": ["DDP Kitchen Door", "CIF Kuwait", "FOB", "Ex-Works"] },
+        "paymentTerms": { "type": "string", "maxLength": 120 },
+        "deliveryCity": { "type": "string", "maxLength": 80 },
+        "neededByDate": { "type": "string", "maxLength": 32 },
+        "sourceRecipeName": { "type": "string", "maxLength": 140 },
+        "status": { "type": "string", "enum": ["open", "quoted", "awarded", "closed"] },
+        "awardedQuoteId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "rfqCode", "buyerUid", "buyerName", "requestType", "categoryPath", "itemName", "quantity", "unit", "targetUnitPriceKwd", "specifications", "certifications", "tradeTerms", "paymentTerms", "deliveryCity", "neededByDate", "sourceRecipeName", "status", "awardedQuoteId", "createdAt", "updatedAt"]
+    },
+    "SupplierQuote": {
+      "title": "SupplierQuote",
+      "description": "Competitive supplier quotation submitted in response to an open SupplierRfq.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "rfqId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "buyerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "supplierUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "supplierCompany": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "supplierContact": { "type": "string", "maxLength": 100 },
+        "originCountry": { "type": "string", "maxLength": 80 },
+        "quotedUnitPriceKwd": { "type": "number" },
+        "moqQty": { "type": "number" },
+        "moqUnit": { "type": "string", "minLength": 1, "maxLength": 24 },
+        "leadTimeDays": { "type": "number" },
+        "shippingTerms": { "type": "string", "maxLength": 120 },
+        "paymentTerms": { "type": "string", "maxLength": 120 },
+        "validUntilDate": { "type": "string", "maxLength": 32 },
+        "warrantyOrShelfLife": { "type": "string", "maxLength": 160 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["submitted", "shortlisted", "accepted", "declined"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "rfqId", "buyerUid", "supplierUid", "supplierCompany", "supplierContact", "originCountry", "quotedUnitPriceKwd", "moqQty", "moqUnit", "leadTimeDays", "shippingTerms", "paymentTerms", "validUntilDate", "warrantyOrShelfLife", "notes", "status", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
-    "/users/{userId}": { "schema": { "$ref": "#/entities/UserProfile" }, "description": "User profile records with loyalty points and hours booked." },
+    "/users/{userId}": { "schema": { "$ref": "#/entities/UserProfile" }, "description": "User profile records with loyalty points, hours booked, and En Cuisine Discover preferences." },
     "/spaces/{spaceId}": { "schema": { "$ref": "#/entities/KitchenSpace" }, "description": "Commercial kitchen suites and stations." },
     "/equipment/{equipmentId}": { "schema": { "$ref": "#/entities/KitchenEquipment" }, "description": "Commercial equipment units rentable hourly." },
     "/availabilitySlots/{slotId}": { "schema": { "$ref": "#/entities/AvailabilitySlot" }, "description": "Non-PII booking time windows for collision detection and occupancy timetable." },
@@ -684,9 +967,19 @@
     "/productionBatches/{batchId}": { "schema": { "$ref": "#/entities/ProductionBatch" }, "description": "Daily production batches and test results." },
     "/attachedForms/{formDocId}": { "schema": { "$ref": "#/entities/AttachedGoogleForm" }, "description": "Google Forms linked to daily production batches." },
     "/rawMaterials/{materialId}": { "schema": { "$ref": "#/entities/RawMaterial" }, "description": "Raw material and ingredient inventory lots." },
+    "/materialOrders/{orderId}": { "schema": { "$ref": "#/entities/MaterialOrder" }, "description": "Raw material purchase orders and receiving history." },
     "/recipes/{recipeId}": { "schema": { "$ref": "#/entities/RecipeTest" }, "description": "Tested recipe formulations and sensory notes." },
+    "/products/{productId}": { "schema": { "$ref": "#/entities/Product" }, "description": "Versioned R&D product records." },
+    "/recipeVersions/{versionId}": { "schema": { "$ref": "#/entities/RecipeVersion" }, "description": "Immutable recipe formulation versions with KWD costing." },
+    "/experiments/{experimentId}": { "schema": { "$ref": "#/entities/RecipeExperiment" }, "description": "Formulation experiment comparisons and adoption decisions." },
     "/staff/{staffId}": { "schema": { "$ref": "#/entities/StaffMember" }, "description": "Kitchen staff directory without PII." },
     "/duties/{dutyId}": { "schema": { "$ref": "#/entities/StaffDuty" }, "description": "Assigned duties for kitchen staff." },
-    "/logs/{logId}": { "schema": { "$ref": "#/entities/SessionLogEntry" }, "description": "Immutable operational and HACCP log entries." }
+    "/logs/{logId}": { "schema": { "$ref": "#/entities/SessionLogEntry" }, "description": "Immutable operational and HACCP log entries." },
+    "/enCuisineItems/{itemId}": { "schema": { "$ref": "#/entities/EnCuisineCatalogItem" }, "description": "En Cuisine Discover admin-curated items and user-submitted brand spotlights." },
+    "/enCuisineIngredientLinks/{linkId}": { "schema": { "$ref": "#/entities/EnCuisineIngredientLink" }, "description": "Mapped Supplier Hub prices linked to recipe ingredients." },
+    "/enCuisineAnalytics/{eventId}": { "schema": { "$ref": "#/entities/EnCuisineAnalyticsEvent" }, "description": "Placement impression and click analytics events." },
+    "/ingredientLibrary/{docId}": { "schema": { "$ref": "#/entities/IngredientLibraryDoc" }, "description": "Persisted En Cuisine custom ingredients, per-owner cost/nutrition overrides, and stock history." },
+    "/supplierRfqs/{rfqId}": { "schema": { "$ref": "#/entities/SupplierRfq" }, "description": "Alibaba-style supplier quotation requests for ingredients, additives, packaging, and machinery." },
+    "/supplierQuotes/{quoteId}": { "schema": { "$ref": "#/entities/SupplierQuote" }, "description": "Supplier quotation responses submitted against open RFQs." }
   }
 }

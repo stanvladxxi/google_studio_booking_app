@@ -17,6 +17,65 @@ export type ProductionUnit = 'units' | 'kg' | 'g' | 'L' | 'trays';
 export type QcStatus = 'passed' | 'hold' | 'failed';
 export type FormProcessType = 'hot' | 'cold';
 export type CustomFormQuestionType = 'scale' | 'choice' | 'text';
+export type ProductStatus = 'active' | 'testing' | 'archived';
+export type ValidationStatus =
+  | 'draft'
+  | 'testing'
+  | 'consumer_validated'
+  | 'production_validated'
+  | 'approved';
+export type ExperimentDecision = 'adopt' | 'reject' | 'continue';
+export type MaterialOrderStatus = 'ordered' | 'in-transit' | 'received' | 'cancelled';
+
+export type UserRole =
+  | 'member'
+  | 'recipe_dev'
+  | 'kitchen_manager'
+  | 'kitchen_worker'
+  | 'aggregator'
+  | 'admin';
+
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  member: 'Normal User',
+  recipe_dev: 'Recipe Developer',
+  kitchen_manager: 'Kitchen Manager',
+  kitchen_worker: 'Kitchen Worker',
+  aggregator: 'Aggregator',
+  admin: 'Admin',
+};
+
+export type ActiveSection =
+  | 'booking'
+  | 'en-cuisine'
+  | 'production'
+  | 'surveys'
+  | 'materials'
+  | 'recipes'
+  | 'logs'
+  | 'duties'
+  | 'orders'
+  | 'menu'
+  | 'admin-lite'
+  | 'admin';
+
+export const ROLE_NAV_MAP: Record<UserRole, ActiveSection[]> = {
+  member: ['booking', 'en-cuisine'],
+  recipe_dev: ['en-cuisine', 'production', 'surveys', 'materials', 'booking', 'logs'],
+  kitchen_manager: ['production', 'materials', 'en-cuisine', 'duties', 'logs', 'admin-lite'],
+  kitchen_worker: ['production', 'duties', 'en-cuisine'],
+  aggregator: ['orders', 'en-cuisine'],
+  admin: [
+    'booking',
+    'en-cuisine',
+    'production',
+    'surveys',
+    'materials',
+    'logs',
+    'duties',
+    'orders',
+    'admin',
+  ],
+};
 
 export const POINTS_PER_HOUR = 100;
 
@@ -24,11 +83,25 @@ export interface UserProfile {
   uid: string;
   displayName: string;
   email: string;
-  role: 'member' | 'admin';
+  role: UserRole;
   loyaltyPoints: number;
   totalHoursBooked: number;
+  businessType?: string;
+  discoverInterests?: string[];
+  newsletterSubscribed?: boolean;
+  newsletterTopics?: string[];
+  followedInfluencerIds?: string[];
+  preferredDir?: 'ltr' | 'rtl';
   createdAt?: unknown;
   updatedAt?: unknown;
+}
+
+export interface BookingPrefillRequest {
+  key: number;
+  spaceId?: string;
+  durationHours?: number;
+  notes?: string;
+  equipmentNames?: string[];
 }
 
 export interface KitchenSpace {
@@ -208,6 +281,189 @@ export interface RecipeTest {
   updatedAt?: unknown;
 }
 
+export interface Product {
+  id: string;
+  ownerId: string;
+  name: string;
+  category: RecipeCategory;
+  status: ProductStatus;
+  currentRecipeVersionId: string;
+  targetMarkupPct?: number;
+  sellingPriceKwd?: number;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface NutritionMacros {
+  kcal: number;
+  fat: number;
+  satFat: number;
+  sugar: number;
+  protein: number;
+  carbs: number;
+}
+
+export interface BakeTestResult {
+  beforeG: number;
+  afterG: number;
+  trimG: number;
+  unitWeightG: number;
+  moistureLossPct: number;
+  usableWeightG: number;
+  wastagePct: number;
+  theoreticalYieldPieces: number;
+  actualYieldPieces: number;
+  loggedAt?: string;
+}
+
+export interface VersionDiffItem {
+  field: string;
+  from: string | number;
+  to: string | number;
+}
+
+export interface InventoryHistoryEntry {
+  date: string;
+  type: 'received' | 'consumed' | 'adjusted';
+  qty: number;
+  note: string;
+}
+
+export type IngredientCostUnit = 'weight' | 'piece' | 'unit' | 'roll';
+
+export interface IngredientLibraryDoc {
+  id: string;
+  ownerId: string;
+  ingredientId: string;
+  name: string;
+  cat: string;
+  custom: boolean;
+  vegan: boolean;
+  allergens: string[];
+  costUnit: IngredientCostUnit;
+  costKg: number;
+  wastagePct: number;
+  pieceWeightG?: number;
+  bulkPieces?: number;
+  costPerUnit?: number;
+  bulkUnitQty?: number;
+  rollLengthM?: number;
+  rollWidthMM?: number;
+  gsm?: number;
+  costPerRoll?: number;
+  wrapLengthCmPerUnit?: number;
+  bulkQty?: number;
+  bulkUnit?: 'kg' | 'g';
+  bulkCost?: number;
+  bulkCurrency?: string;
+  kcal: number;
+  fat: number;
+  satFat: number;
+  sugar: number;
+  protein: number;
+  carbs: number;
+  ecode?: string;
+  dosage?: string;
+  func?: string;
+  note?: string;
+  stockQty: number;
+  history: InventoryHistoryEntry[];
+  isDeleted?: boolean;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface RecipeVersionIngredient {
+  name: string;
+  amountG: number;
+  unit: string;
+  displayAmount?: number;
+  unitCostKwd?: number;
+  ingredientId?: string;
+  cat?: string;
+  supplier?: string;
+  isPackaging?: boolean;
+}
+
+export interface RecipeVersion {
+  id: string;
+  productId: string;
+  ownerId: string;
+  versionNumber: number;
+  ingredients: RecipeVersionIngredient[];
+  batchSize: number;
+  expectedYield: number;
+  yieldUnit: string;
+  prepMinutes: number;
+  targetTempC: number;
+  method: string;
+  equipment: string[];
+  expectedCost: number;
+  packagingCostKwd?: number;
+  overheadCostKwd?: number;
+  markupPct?: number;
+  suggestedPriceKwd?: number;
+  targetPieceWeightG?: number;
+  nutritionPer100g?: NutritionMacros;
+  allergens?: string[];
+  additives?: string[];
+  bakeTest?: BakeTestResult;
+  score?: number;
+  scoreNotes?: string;
+  diffs?: VersionDiffItem[];
+  changeReason: string;
+  expectedEffect: string;
+  actualOutcome: string;
+  validationStatus: ValidationStatus;
+  legacyRecipeId?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface RecipeExperiment {
+  id: string;
+  productId: string;
+  ownerId: string;
+  objective: string;
+  baselineVersionId: string;
+  variableChanged: string;
+  experimentVersionId: string;
+  expectedResult: string;
+  decision: ExperimentDecision;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface MaterialOrderItem {
+  materialName: string;
+  category: MaterialCategory;
+  quantity: number;
+  unit: MaterialUnit;
+  gramsTotal: number;
+  unitCostKwd: number;
+  lineTotalKwd: number;
+  storageZone: StorageZone;
+}
+
+export interface MaterialOrder {
+  id: string;
+  ownerId: string;
+  orderedByName: string;
+  orderCode: string;
+  supplier: string;
+  sourceProductId: string;
+  sourceVersionLabel: string;
+  items: MaterialOrderItem[];
+  subtotalKwd: number;
+  deliveryFeeKwd: number;
+  totalKwd: number;
+  status: MaterialOrderStatus;
+  expectedDate: string;
+  notes: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
 export interface StaffMember {
   id: string;
   staffCode: string;
@@ -254,6 +510,68 @@ export interface SessionLogEntry {
   createdAt?: unknown;
 }
 
+export interface ProductionBatchPrefillRequest {
+  key: number;
+  productName: string;
+  quantityProduced: number;
+  unit: ProductionUnit;
+  bakeTempC: number;
+  productionNotes: string;
+  sourceProductId?: string;
+  sourceVersionNumber?: number;
+}
+
+export type SupplierRfqRequestType = 'ingredient' | 'machinery' | 'packaging';
+export type SupplierRfqTradeTerms = 'DDP Kitchen Door' | 'CIF Kuwait' | 'FOB' | 'Ex-Works';
+export type SupplierRfqStatus = 'open' | 'quoted' | 'awarded' | 'closed';
+export type SupplierQuoteStatus = 'submitted' | 'shortlisted' | 'accepted' | 'declined';
+
+export interface SupplierRfq {
+  id: string;
+  rfqCode: string;
+  buyerUid: string;
+  buyerName: string;
+  requestType: SupplierRfqRequestType;
+  categoryPath: string;
+  itemName: string;
+  quantity: number;
+  unit: string;
+  targetUnitPriceKwd: number;
+  specifications: string;
+  certifications: string[];
+  tradeTerms: SupplierRfqTradeTerms;
+  paymentTerms: string;
+  deliveryCity: string;
+  neededByDate: string;
+  sourceRecipeName: string;
+  status: SupplierRfqStatus;
+  awardedQuoteId: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface SupplierQuote {
+  id: string;
+  rfqId: string;
+  buyerUid: string;
+  supplierUid: string;
+  supplierCompany: string;
+  supplierContact: string;
+  originCountry: string;
+  quotedUnitPriceKwd: number;
+  moqQty: number;
+  moqUnit: string;
+  leadTimeDays: number;
+  shippingTerms: string;
+  paymentTerms: string;
+  validUntilDate: string;
+  warrantyOrShelfLife: string;
+  notes: string;
+  status: SupplierQuoteStatus;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
 export const LIMITS = {
   ID_PATTERN: /^[a-zA-Z0-9_\-]+$/,
   DATE_PATTERN: /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
@@ -268,6 +586,8 @@ export const LIMITS = {
   YIELD_MAX: 80,
   LOT_MAX: 60,
   BATCH_MAX: 48,
+  METHOD_MAX: 2000,
+  REASON_MAX: 400,
 } as const;
 
 export function sanitizeId(input: string): string {

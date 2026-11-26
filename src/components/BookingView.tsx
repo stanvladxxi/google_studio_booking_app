@@ -18,6 +18,7 @@ import {
   AvailabilitySlot,
   BookedEquipmentItem,
   Booking,
+  BookingPrefillRequest,
   BookingQueueEntry,
   KitchenEquipment,
   KitchenSpace,
@@ -39,8 +40,9 @@ interface BookingViewProps {
   bookings: Booking[];
   queueEntries: BookingQueueEntry[];
   loading: boolean;
+  prefillRequest?: BookingPrefillRequest | null;
   onNotify: (msg: string, type?: 'success' | 'error') => void;
-  onOpenProductionForBooking: (bookingId: string) => void;
+  onOpenProductionForBooking?: (bookingId: string) => void;
 }
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 06:00 to 21:00
@@ -59,6 +61,7 @@ export function BookingView({
   bookings,
   queueEntries,
   loading,
+  prefillRequest = null,
   onNotify,
   onOpenProductionForBooking,
 }: BookingViewProps) {
@@ -82,6 +85,36 @@ export function BookingView({
       setSelectedSpaceId(activeSpaces[0].id);
     }
   }, [activeSpaces, selectedSpaceId]);
+
+  useEffect(() => {
+    if (!prefillRequest) return;
+    if (prefillRequest.spaceId && activeSpaces.some((s) => s.id === prefillRequest.spaceId)) {
+      setSelectedSpaceId(prefillRequest.spaceId);
+    }
+    if (typeof prefillRequest.durationHours === 'number' && prefillRequest.durationHours >= 1) {
+      setDurationHours(Math.min(12, Math.max(1, prefillRequest.durationHours)));
+    }
+    if (prefillRequest.equipmentNames && prefillRequest.equipmentNames.length > 0) {
+      const nextEq: Record<string, number> = {};
+      for (const reqName of prefillRequest.equipmentNames) {
+        const needle = reqName.toLowerCase();
+        const found = activeEquipment.find(
+          (eq) =>
+            eq.name.toLowerCase().includes(needle) ||
+            needle.includes(eq.name.toLowerCase().split(' ')[0])
+        );
+        if (found) {
+          nextEq[found.id] = 1;
+        }
+      }
+      if (Object.keys(nextEq).length > 0) {
+        setEquipmentQty((prev) => ({ ...prev, ...nextEq }));
+      }
+    }
+    if (prefillRequest.notes) {
+      setNotes(clampStr(prefillRequest.notes, LIMITS.NOTES_MAX));
+    }
+  }, [prefillRequest, activeSpaces, activeEquipment]);
 
   const effectiveSpace = useMemo(
     () => activeSpaces.find((s) => s.id === selectedSpaceId) || activeSpaces[0] || null,
@@ -949,14 +982,16 @@ export function BookingView({
                               <QrCode className="w-3.5 h-3.5" />
                               QR Pass
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => onOpenProductionForBooking(b.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-teal-800 hover:bg-teal-50 rounded border border-teal-200 transition-colors whitespace-nowrap"
-                            >
-                              <FlaskConical className="w-3.5 h-3.5" />
-                              Log Production
-                            </button>
+                            {onOpenProductionForBooking && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenProductionForBooking(b.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-teal-800 hover:bg-teal-50 rounded border border-teal-200 transition-colors whitespace-nowrap"
+                              >
+                                <FlaskConical className="w-3.5 h-3.5" />
+                                Log Production
+                              </button>
+                            )}
                           </>
                         )}
                         {(b.status === 'confirmed' || b.status === 'in-progress') && (
